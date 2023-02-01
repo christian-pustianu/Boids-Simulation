@@ -1,0 +1,17 @@
+# ignore SLN File
+*.sln
+
+# ignore vcxproj
+*.vcxproj
+*.vcxproj.user
+
+# .vs folder
+.vs
+
+# Build Artefacts
+_build_
+lib
+bin
+
+# ignore ImGui File
+imgui.ini
