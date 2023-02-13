@@ -13,7 +13,7 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 		float y = std::cos(angle);
 		float z = std::sin(angle);
 
-		// One triangle (3 pos) create one segment of the cone’s shell.
+		// One triangle (3 pos) create one segment of the coneï¿½s shell.
 		vertices.emplace_back(Vertex{ Vec3f{ 0.f, prevY, prevZ }, Vec3f{ 0.f, prevY, prevZ }, Vec2f{} });
 		vertices.emplace_back(Vertex{ Vec3f{ 0.f, y, z }, Vec3f{ 0.f, y, z }, Vec2f{} });
 		vertices.emplace_back(Vertex{ Vec3f{ 1.f, 0.f, 0.f }, Vec3f{ 0.f, 0.f, 0.f }, Vec2f{} });
@@ -29,7 +29,7 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 			float y = std::cos(angle);
 			float z = std::sin(angle);
 
-			// One triangle (3 pos) create one segment of the cone’s cap.
+			// One triangle (3 pos) create one segment of the coneï¿½s cap.
 			vertices.emplace_back(Vertex{ Vec3f{ 0.f, prevY, prevZ }, Vec3f{ 0.f, prevY, prevZ }, Vec2f{} });
 			vertices.emplace_back(Vertex{ Vec3f{ 0.f, 0.f, 0.f }, Vec3f{ 0.f, 0.f, 0.f }, Vec2f{} });
 			vertices.emplace_back(Vertex{ Vec3f{ 0.f, y, z }, Vec3f{ 0.f, y, z }, Vec2f{} });
@@ -43,7 +43,6 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 		Vec4f p4{ v.positions.x, v.positions.y, v.positions.z, 1.f };
 		Vec4f t = aPreTransform * p4;
 		t /= t.w;
-		printf("t: %f %f %f\n", t.x, t.y, t.z);
 
 		v.positions = Vec3f{ t.x, t.y, t.z };
 	}
@@ -51,11 +50,6 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 	Material material;
 	material.ambient = aColor;
 	Mesh mesh(vertices, material);
-
-	for (auto& v : mesh.vertices)
-	{
-		printf("v: %f %f %f", v.positions.x, v.positions.y, v.positions.z);
-	}
 	return mesh;
 }
 
