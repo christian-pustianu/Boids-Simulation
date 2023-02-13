@@ -82,7 +82,7 @@ project "main"
 
 	files( sources )
 
-	-- links "vmlib"
+	links "math"
 
 	links "x-stb"
 	links "x-glad"
@@ -106,17 +106,17 @@ project "main-shaders"
 
 	files( shaders )
 
--- project "vmlib"
--- 	local sources = { 
--- 		"vmlib/**.cpp",
--- 		"vmlib/**.hpp",
--- 		"vmlib/**.hxx",
--- 		"vmlib/**.inl"
--- 	}
+project "math"
+	local sources = { 
+		"math/**.cpp",
+		"math/**.hpp",
+		"math/**.hxx",
+		"math/**.inl"
+	}
 
--- 	kind "StaticLib"
--- 	location "vmlib"
+	kind "StaticLib"
+	location "math"
 
--- 	files( sources )
+	files( sources )
 
 --EOF

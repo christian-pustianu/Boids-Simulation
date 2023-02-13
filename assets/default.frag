@@ -1,7 +1,15 @@
-#version 430 core
+#version 430
 
-out vec4 FragColor;
+// Input attributes
+// These should match the outputs from the vertex shader.
+in vec3 v2fColor;
+
+// Uniform data
+
+// Fragment shader outputs
+layout( location = 0 ) out vec3 oColor;
+
 void main()
 {
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+	oColor = v2fColor;
 }

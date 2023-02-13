@@ -8,21 +8,21 @@
 class Shader
 {
 private:
-	const char* vertexShaderSource = "";
-	const char* fragmentShaderSource = "";
+	const GLchar* vertexShaderSource = "";
+	const GLchar* fragmentShaderSource = "";
 	
 	GLchar* readShader(const char* sourcePath);
 	
-	unsigned int setupVertexShader();
-	unsigned int setupFragmentShader();
+	GLuint setupVertexShader();
+	GLuint setupFragmentShader();
 	
 public:
 	// Container struct for shaders.
 	struct ShaderData
 	{
-		unsigned int shaderProgram;
-		unsigned int vertexShader;
-		unsigned int fragmentShader;
+		GLuint shaderProgram;
+		GLuint vertexShader;
+		GLuint fragmentShader;
 		bool success;
 
 		void cleanup() {
@@ -42,6 +42,10 @@ public:
 		{
 			throw std::exception("Shader compilation failed.");
 		}
+	};
+
+	~Shader() {
+		data.cleanup();
 	};
 
 	ShaderData setupShaderProgram();
