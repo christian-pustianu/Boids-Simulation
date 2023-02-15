@@ -12,48 +12,63 @@
 
 extern "C"
 {
+    // Force the use of the NVIDIA GPU on laptops with switchable graphics
     __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 }
 
 namespace
 {
+    // Global variables
     const unsigned int WINDOW_WIDTH = 1280;
     const unsigned int WINDOW_HEIGHT = 720;
 
-    constexpr float kPi_ = 3.1415926f;
+    constexpr float PI = 3.1415926f;
 
-    constexpr float kMovementPerSecond_ = 5.f; // units per second
-    constexpr float kMouseSensitivity_ = 0.01f; // radians per pixel
+    constexpr float CAMERA_MOVEMENT = 10.f;
+    constexpr float MOUSE_SENSITIVITY = 0.01f;
 
     struct CameraState
     {
-        bool cameraActive;
-        bool actionZoomIn, actionZoomOut;
+        bool active;
+        bool moveForward, moveBackwards;
 
-        float phi, theta;
-        float radius;
+        float xRotation, yRotation;
+        float translation;
 
-        float lastX, lastY;
+        float lastXPos, lastYPos;
     };
 
-    void glfw_callback_error_(int, char const*);
-
-    void glfw_callback_key_(GLFWwindow*, int, int, int, int);
-    void glfw_callback_motion_(GLFWwindow*, double, double);
+    // Callaback definitions for glfw
+    void error_callback(int, const char*);
+    void key_callback(GLFWwindow*, int, int, int, int);
+    void cursor_position_callback(GLFWwindow*, double, double);
 }
 
 
 int main()
 {
+    // Initialize glfw
     if (!glfwInit())
     {
         throw std::exception("Failed to initialize GLFW");
     }
 
+    // Set up glfw error handling
+    glfwSetErrorCallback(&error_callback);
+
+    // Set up glfw window hints
+    glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
+    // Create the window
     GLFWwindow* window = glfwCreateWindow(
         WINDOW_WIDTH, WINDOW_HEIGHT,
         "Boids-Simulation",
@@ -65,16 +80,14 @@ int main()
         throw std::exception("Failed to create GLFW window");
     }
 
-    // Set up event handling (instead of processInput())
-    //glfwSetKeyCallback(window, &glfw_callback_key_);
-    //glfwSetCursorPosCallback(window, &glfw_callback_motion_);
-        // Set up event handling
+    // Initialize camera
     CameraState camera{};
+    camera.translation = 10.f;
 
+    // Set up glfw event handling
     glfwSetWindowUserPointer(window, &camera);
-
-    glfwSetKeyCallback(window, &glfw_callback_key_);
-    glfwSetCursorPosCallback(window, &glfw_callback_motion_);
+    glfwSetKeyCallback(window, &key_callback);
+    glfwSetCursorPosCallback(window, &cursor_position_callback);
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -84,24 +97,26 @@ int main()
     {
         throw std::exception("Failed to load GLAD");
     }
-
     std::printf("RENDERER %s\n", glGetString(GL_RENDERER));
     std::printf("VENDOR %s\n", glGetString(GL_VENDOR));
     std::printf("VERSION %s\n", glGetString(GL_VERSION));
     std::printf("SHADING_LANGUAGE_VERSION %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
+    // Set a clear color
+    glEnable(GL_FRAMEBUFFER_SRGB);
+    glEnable(GL_CULL_FACE);
+    glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+    
     // Set viewport to current window size
     int iwidth, iheight;
     glfwGetFramebufferSize(window, &iwidth, &iheight);
     glViewport(0, 0, iwidth, iheight);
 
+    // Initialize time for animations
+    auto last = std::chrono::steady_clock::now();
+    
     // Set up shaders
     Shader shader = Shader("assets/default.vert", "assets/default.frag");
-
-
-    camera.radius = 10.f;
-    // Animation state
-    auto last = std::chrono::steady_clock::now();
 
     // Define objects
     Render object = Render(make_cone());
@@ -111,33 +126,27 @@ int main()
     {
         glfwPollEvents();
 
-        // Update state
+        // Update time dt between frames
         auto const now = std::chrono::steady_clock::now();
         float dt = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1>>>(now - last).count();
         last = now;
 
         // Update camera state
-        if (camera.actionZoomIn)
-            camera.radius -= kMovementPerSecond_ * dt;
-        else if (camera.actionZoomOut)
-            camera.radius += kMovementPerSecond_ * dt;
+        if (camera.moveForward)
+            camera.translation -= CAMERA_MOVEMENT * dt;
+        else if (camera.moveBackwards)
+            camera.translation += CAMERA_MOVEMENT * dt;
 
-        if (camera.radius <= 0.1f)
-            camera.radius = 0.1f;
+        if (camera.translation <= 0.1f)
+            camera.translation = 0.1f;
 
-        // Set a clear color.
-        glEnable(GL_FRAMEBUFFER_SRGB);
-        glEnable(GL_CULL_FACE);
-        glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
-
+        // Set up projection to screen
         Mat44f model2world = make_rotation_y(0);
 
-        Mat44f Rx = make_rotation_x(camera.theta);
-        Mat44f Ry = make_rotation_y(camera.phi);
-        Mat44f T = make_translation({ 0.f, 0.f, -camera.radius });
+        Mat44f Rx = make_rotation_x(camera.yRotation);
+        Mat44f Ry = make_rotation_y(camera.xRotation);
+        Mat44f T = make_translation({ 0.f, 0.f, -camera.translation });
         Mat44f world2camera = T * Rx * Ry;
-
-        //Mat44f world2camera = make_translation({ 0.f, 0.f, -3.f});
 
         Mat44f projection = make_perspective_projection(
             60.f * 3.1415926f / 180.f, // fov = 60 degrees
@@ -159,10 +168,15 @@ int main()
             1, GL_TRUE, model2world.v
         );
 
-        // Render objects with specified shader
+        // Enable alpha blending
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        // Draw blended objects
 
+        glDisable(GL_BLEND);
+        
+        // Render objects with specified shader
         object.render(shader);
 
         glfwSwapBuffers(window);
@@ -170,8 +184,8 @@ int main()
     }
 
     // Clean-up
-    shader.~Shader();
     object.~Render();
+    shader.~Shader();
 
     glfwTerminate();
     return 0;
@@ -181,74 +195,74 @@ int main()
 // Setup for GLFW callbacks
 namespace
 {
-    void glfw_callback_error_(int aErrNum, char const* aErrDesc)
+    void error_callback(int code, const char* description)
     {
-        std::fprintf(stderr, "GLFW error: %s (%d)\n", aErrDesc, aErrNum);
+        std::fprintf(stderr, "GLFW error: %s (%d)\n", description, code);
     }
 
-    void glfw_callback_key_(GLFWwindow* aWindow, int aKey, int, int aAction, int)
+    void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
-        if (GLFW_KEY_ESCAPE == aKey && GLFW_PRESS == aAction)
+        if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action)
         {
-            glfwSetWindowShouldClose(aWindow, GLFW_TRUE);
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
             return;
         }
 
-        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(aWindow)))
+        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window)))
         {
 
             // Space toggles camera
-            if (GLFW_KEY_SPACE == aKey && GLFW_PRESS == aAction)
+            if (GLFW_KEY_SPACE == key && GLFW_PRESS == action)
             {
-                camera->cameraActive = !camera->cameraActive;
+                camera->active = !camera->active;
 
-                if (camera->cameraActive)
-                    glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                if (camera->active)
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
                 else
-                    glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
 
             // Camera controls if camera is active
-            if (camera->cameraActive)
+            if (camera->active)
             {
-                if (GLFW_KEY_W == aKey)
+                if (GLFW_KEY_W == key)
                 {
-                    if (GLFW_PRESS == aAction)
-                        camera->actionZoomIn = true;
-                    else if (GLFW_RELEASE == aAction)
-                        camera->actionZoomIn = false;
+                    if (GLFW_PRESS == action)
+                        camera->moveForward = true;
+                    else if (GLFW_RELEASE == action)
+                        camera->moveForward = false;
                 }
-                else if (GLFW_KEY_S == aKey)
+                else if (GLFW_KEY_S == key)
                 {
-                    if (GLFW_PRESS == aAction)
-                        camera->actionZoomOut = true;
-                    else if (GLFW_RELEASE == aAction)
-                        camera->actionZoomOut = false;
+                    if (GLFW_PRESS == action)
+                        camera->moveBackwards = true;
+                    else if (GLFW_RELEASE == action)
+                        camera->moveBackwards = false;
                 }
             }
         }
     }
 
-    void glfw_callback_motion_(GLFWwindow* aWindow, double aX, double aY)
+    void cursor_position_callback(GLFWwindow* window, double xPos, double yPos)
     {
-        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(aWindow)))
+        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window)))
         {
-            if (camera->cameraActive)
+            if (camera->active)
             {
-                auto const dx = float(aX - camera->lastX);
-                auto const dy = float(aY - camera->lastY);
+                auto const dx = float(xPos - camera->lastXPos);
+                auto const dy = float(yPos - camera->lastYPos);
 
-                camera->phi += dx * kMouseSensitivity_;
+                camera->xRotation += dx * MOUSE_SENSITIVITY;
+                camera->yRotation += dy * MOUSE_SENSITIVITY;
 
-                camera->theta += dy * kMouseSensitivity_;
-                if (camera->theta > kPi_ / 2.f)
-                    camera->theta = kPi_ / 2.f;
-                else if (camera->theta < -kPi_ / 2.f)
-                    camera->theta = -kPi_ / 2.f;
+                if (camera->yRotation > PI / 2.f)
+                    camera->yRotation = PI / 2.f;
+                else if (camera->yRotation < -PI / 2.f)
+                    camera->yRotation = -PI / 2.f;
             }
 
-            camera->lastX = float(aX);
-            camera->lastY = float(aY);
+            camera->lastXPos = float(xPos);
+            camera->lastYPos = float(yPos);
         }
     }
 }
