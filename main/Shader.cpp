@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "Shader.hpp"
 
 
 // load shader from file into a string

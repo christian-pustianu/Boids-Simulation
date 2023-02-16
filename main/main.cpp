@@ -5,10 +5,11 @@
 #include <cstdlib>
 #include <chrono>
 
-#include "Shader.h"
-#include "Render.h"
-#include "Mesh.h"
+#include "Shader.hpp"
+#include "Render.hpp"
+#include "Mesh.hpp"
 #include "cone.hpp"
+#include "loadobj.hpp"
 
 extern "C"
 {
@@ -104,6 +105,7 @@ int main()
 
     // Set a clear color
     glEnable(GL_FRAMEBUFFER_SRGB);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
     
@@ -120,6 +122,7 @@ int main()
     Shader shader = Shader("assets/default.vert", "assets/default.frag");
 
     // Define objects
+    //Render object = Render(load_wavefront_obj("assets/Armadillo.obj"));
     Render object = Render(make_cone());
 
     // Start the rendering loop

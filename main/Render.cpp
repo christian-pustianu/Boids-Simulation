@@ -1,4 +1,4 @@
-#include "Render.h"
+#include "Render.hpp"
 
 #define POSITIONS 0
 #define NORMALS 1
