@@ -5,10 +5,19 @@ layout ( location = 0 ) in vec3 iPosition;
 layout ( location = 1 ) in vec3 iNormal;
 
 // Uniform data
-layout( location = 0 ) uniform mat4 uProjCameraWorld;
+layout( location = 0 ) uniform mat4 uProjection;
+layout( location = 1 ) uniform mat4 uModel2world;
+
+out vec3 v2fPosition;
+out vec3 v2fNormal;
 
 void main()
 {
+	mat3 normalMatrix = mat3(transpose(inverse(uModel2world)));
+	v2fNormal = normalize(normalMatrix * iNormal);
+	vec4 worldPos = uModel2world * vec4( iPosition.xyz, 1.0 );
+	v2fPosition = worldPos.xyz;
+
 	// Copy position to the built-in gl Position attribute
-	gl_Position = uProjCameraWorld * vec4( iPosition.xyz, 1.0 );
+	gl_Position = uProjection * worldPos;
 }

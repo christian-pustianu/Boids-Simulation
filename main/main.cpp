@@ -82,7 +82,7 @@ int main()
 
     // Initialize camera
     CameraState camera{};
-    camera.translation = 10.f;
+    camera.translation = 5.f;
 
     // Set up glfw event handling
     glfwSetWindowUserPointer(window, &camera);
@@ -141,7 +141,7 @@ int main()
             camera.translation = 0.1f;
 
         // Set up projection to screen
-        Mat44f model2world = make_rotation_y(0);
+        Mat44f model2world = kIdentity44f;
 
         Mat44f Rx = make_rotation_x(camera.yRotation);
         Mat44f Ry = make_rotation_y(camera.xRotation);
@@ -154,13 +154,13 @@ int main()
             0.1f, 100.0f
         );
 
-        Mat44f projCameraWorld = projection * world2camera * model2world;
+        Mat44f world2projection = projection * world2camera;
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUniformMatrix4fv(
             0,
-            1, GL_TRUE, projCameraWorld.v
+            1, GL_TRUE, world2projection.v
         );
 
         glUniformMatrix4fv(

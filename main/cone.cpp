@@ -1,8 +1,11 @@
 #include "cone.hpp"
 
+
 Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTransform )
 {
 	std::vector<Vertex> vertices;
+
+	Mat33f const N = mat44_to_mat33(transpose(invert(aPreTransform)));
 
 	float prevY = std::cos(0.f);
 	float prevZ = std::sin(0.f);
@@ -14,9 +17,9 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 		float z = std::sin(angle);
 
 		// One triangle (3 pos) create one segment of the cone�s shell.
-		vertices.emplace_back(Vertex{ Vec3f{ 0.f, prevY, prevZ }, Vec3f{ 0.f, prevY, prevZ }, Vec2f{} });
-		vertices.emplace_back(Vertex{ Vec3f{ 0.f, y, z }, Vec3f{ 0.f, y, z }, Vec2f{} });
-		vertices.emplace_back(Vertex{ Vec3f{ 1.f, 0.f, 0.f }, Vec3f{ 0.f, 0.f, 0.f }, Vec2f{} });
+		vertices.emplace_back(Vertex{ Vec3f{ 0.f, prevY, prevZ }, Vec3f{ 0.5f, prevY/2, prevZ/2 }, Vec2f{} });
+		vertices.emplace_back(Vertex{ Vec3f{ 0.f, y, z }, Vec3f{ 0.5f, y/2, z/2 }, Vec2f{} });
+		vertices.emplace_back(Vertex{ Vec3f{ 1.f, 0.f, 0.f }, Vec3f{ 0.5f, (prevY + y)/4, (prevZ + z)/4 }, Vec2f{} });
 
 		prevY = y;
 		prevZ = z;
@@ -30,9 +33,9 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 			float z = std::sin(angle);
 
 			// One triangle (3 pos) create one segment of the cone�s cap.
-			vertices.emplace_back(Vertex{ Vec3f{ 0.f, prevY, prevZ }, Vec3f{ 0.f, prevY, prevZ }, Vec2f{} });
-			vertices.emplace_back(Vertex{ Vec3f{ 0.f, 0.f, 0.f }, Vec3f{ 0.f, 0.f, 0.f }, Vec2f{} });
-			vertices.emplace_back(Vertex{ Vec3f{ 0.f, y, z }, Vec3f{ 0.f, y, z }, Vec2f{} });
+			vertices.emplace_back(Vertex{ Vec3f{ 0.f, prevY, prevZ }, Vec3f{ -1.f, 0.f, 0.f }, Vec2f{} });
+			vertices.emplace_back(Vertex{ Vec3f{ 0.f, 0.f, 0.f }, Vec3f{ -1.f, 0.f, 0.f }, Vec2f{} });
+			vertices.emplace_back(Vertex{ Vec3f{ 0.f, y, z }, Vec3f{ -1.f, 0.f, 0.f }, Vec2f{} });
 
 			prevY = y;
 			prevZ = z;
@@ -45,6 +48,8 @@ Mesh make_cone( bool aCapped, std::size_t aSubdivs, Vec3f aColor, Mat44f aPreTra
 		t /= t.w;
 
 		v.positions = Vec3f{ t.x, t.y, t.z };
+
+		v.normals = N * v.normals;
 	}
 
 	Material material;

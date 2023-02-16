@@ -9,6 +9,7 @@
 
 #include "../math/vec3.hpp"
 #include "../math/mat44.hpp"
+#include "../math/mat33.hpp"
 
 Mesh make_cone(
 	bool aCapped = true,
