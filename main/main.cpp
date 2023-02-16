@@ -33,7 +33,7 @@ namespace
         bool moveForward, moveBackwards;
 
         float xRotation, yRotation;
-        float translation;
+        float zTranslation;
 
         float lastXPos, lastYPos;
     };
@@ -82,7 +82,7 @@ int main()
 
     // Initialize camera
     CameraState camera{};
-    camera.translation = 5.f;
+    camera.zTranslation = 5.f;
 
     // Set up glfw event handling
     glfwSetWindowUserPointer(window, &camera);
@@ -114,6 +114,7 @@ int main()
 
     // Initialize time for animations
     auto last = std::chrono::steady_clock::now();
+    float angle = 0.f;
     
     // Set up shaders
     Shader shader = Shader("assets/default.vert", "assets/default.frag");
@@ -133,19 +134,21 @@ int main()
 
         // Update camera state
         if (camera.moveForward)
-            camera.translation -= CAMERA_MOVEMENT * dt;
+            camera.zTranslation -= CAMERA_MOVEMENT * dt;
         else if (camera.moveBackwards)
-            camera.translation += CAMERA_MOVEMENT * dt;
+            camera.zTranslation += CAMERA_MOVEMENT * dt;
 
-        if (camera.translation <= 0.1f)
-            camera.translation = 0.1f;
+        if (camera.zTranslation <= 0.1f)
+            camera.zTranslation = 0.1f;
+
+        angle += 0.5f * dt;
 
         // Set up projection to screen
-        Mat44f model2world = kIdentity44f;
+        Mat44f model2world = make_rotation_z(angle);
 
         Mat44f Rx = make_rotation_x(camera.yRotation);
         Mat44f Ry = make_rotation_y(camera.xRotation);
-        Mat44f T = make_translation({ 0.f, 0.f, -camera.translation });
+        Mat44f T = make_translation({ 0.f, 0.f, -camera.zTranslation });
         Mat44f world2camera = T * Rx * Ry;
 
         Mat44f projection = make_perspective_projection(
@@ -167,6 +170,10 @@ int main()
             1,
             1, GL_TRUE, model2world.v
         );
+
+        // Camera
+        Vec3f cameraPosition = { 0.f, 0.f, camera.zTranslation };
+        glUniform3f(2, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
         // Enable alpha blending
         glEnable(GL_BLEND);

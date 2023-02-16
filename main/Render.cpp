@@ -2,7 +2,6 @@
 
 #define POSITIONS 0
 #define NORMALS 1
-//#define TEXCOORDS 2
 
 
 RenderData Render::setupRendering(Mesh const& mesh)
@@ -13,7 +12,6 @@ RenderData Render::setupRendering(Mesh const& mesh)
     for (Vertex const& v : mesh.vertices) {
         positions.emplace_back(v.positions);
         normals.emplace_back(v.normals);
-        printf("normals: %f %f %f\n", v.normals.x, v.normals.y, v.normals.z);
     }
 
     // VBO
@@ -31,13 +29,11 @@ RenderData Render::setupRendering(Mesh const& mesh)
     glGenVertexArrays(1, &data.VAO);
     glBindVertexArray(data.VAO);
 
-    int j = 3;
     for (GLuint i = 0; i < data.VBO.size(); i++) {
         glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(i));
-        //if (i == TEXCOORDS) j = 2;
         glVertexAttribPointer(
             i,	// location = 0 in vertex shader
-            j, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
+            3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
             0,	// stride = 0 no padding
             (GLvoid*)0	// data starts at offset 0 in VBO
         );
@@ -75,27 +71,27 @@ void Render::render(Shader shader)
     glUniform1f(loc, mat.alpha);
 
     // Lights
-    Vec3f LightPos = { 0.f, 1.2f, 0.f };
+    Vec3f LightPos = { 0.f, 2.f, 0.f };
     Vec3f ambientLight = { 0.03f, 0.03f, 0.03f };
     Vec3f diffuseLight = { 4.5f, 4.5f, 3.f };
     Vec3f specularLight = { 0.5f, 0.5f, 0.5f };
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "light.Postion");
-    glUniform3fv(loc, 1, &LightPos.x);
+    loc = glGetUniformLocation(shader.data.shaderProgram, "light.Position");
+    glUniform3f(loc, LightPos.x, LightPos.y, LightPos.z);
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Ambient");
-    glUniform3fv(loc, 1, &ambientLight.x);
+    glUniform3f(loc, ambientLight.x, ambientLight.y, ambientLight.z);
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Diffuse");
-    glUniform3fv(loc, 1, &diffuseLight.x);
+    glUniform3f(loc, diffuseLight.x, diffuseLight.y, diffuseLight.z);
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Specular");
-    glUniform3fv(loc, 1, &specularLight.x);
+    glUniform3f(loc, specularLight.x, specularLight.y, specularLight.z);
 
     // Camera
-    Vec3f camera = { 0.f, 0.f, -5.f };
+    Vec3f camera = { 0.f, 0.f, 0.f };
     loc = glGetUniformLocation(shader.data.shaderProgram, "camera");
-    glUniform3fv(loc, 1, &camera.x);
+    glUniform3f(loc, camera.x, camera.y, camera.z);
 
 
     glBindVertexArray(this->data.VAO);
