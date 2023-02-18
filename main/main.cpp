@@ -29,13 +29,19 @@ namespace
     constexpr float CAMERA_MOVEMENT = 10.f;
     constexpr float MOUSE_SENSITIVITY = 0.01f;
 
+    constexpr unsigned int ARC_BALL = 0;
+    constexpr unsigned int FlY_THROUGH = 1;
+    constexpr unsigned int TOP_DOWN = 2;
+    constexpr unsigned int THIRD_PERSON = 3;
+
     struct CameraState
     {
         bool active;
-        bool moveForward, moveBackwards;
+        struct move { bool forward, backwards, left, right, up, down; } move;
 
-        float xRotation, yRotation;
-        float zTranslation;
+        Vec2f rotation = { 0.f, 0.f };
+        Vec3f position = { 0.f, 0.f, 0.f };
+        unsigned int mode = ARC_BALL; // default mode
 
         float lastXPos, lastYPos;
     };
@@ -84,7 +90,7 @@ int main()
 
     // Initialize camera
     CameraState camera{};
-    camera.zTranslation = 5.f;
+    camera.position.z = 5.f;
 
     // Set up glfw event handling
     glfwSetWindowUserPointer(window, &camera);
@@ -109,11 +115,6 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
-    
-    // Set viewport to current window size
-    int iwidth, iheight;
-    glfwGetFramebufferSize(window, &iwidth, &iheight);
-    glViewport(0, 0, iwidth, iheight);
 
     // Initialize time for animations
     auto last = std::chrono::steady_clock::now();
@@ -130,6 +131,19 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+        
+        // Set viewport to current window size
+        int nwidth, nheight;
+        glfwGetFramebufferSize(window, &nwidth, &nheight);
+
+        // if the window is minimized, wait for it to be restored
+        while (0 == nwidth || 0 == nheight)
+        {
+            glfwWaitEvents();
+			glfwGetFramebufferSize(window, &nwidth, &nheight);
+        }
+
+        glViewport(0, 0, nwidth, nheight);
 
         // Update time dt between frames
         auto const now = std::chrono::steady_clock::now();
@@ -137,27 +151,49 @@ int main()
         last = now;
 
         // Update camera state
-        if (camera.moveForward)
-            camera.zTranslation -= CAMERA_MOVEMENT * dt;
-        else if (camera.moveBackwards)
-            camera.zTranslation += CAMERA_MOVEMENT * dt;
+        if (camera.mode == ARC_BALL)
+        {
+            if (camera.move.forward)
+                camera.position.z -= CAMERA_MOVEMENT * dt;
+            else if (camera.move.backwards)
+                camera.position.z += CAMERA_MOVEMENT * dt;
 
-        if (camera.zTranslation <= 0.1f)
-            camera.zTranslation = 0.1f;
+            if (camera.position.z <= 0.1f)
+                camera.position.z = 0.1f;
+        }
 
         angle += 0.5f * dt;
 
         // Set up projection to screen
         Mat44f model2world = make_rotation_z(angle);
 
-        Mat44f Rx = make_rotation_x(camera.yRotation);
-        Mat44f Ry = make_rotation_y(camera.xRotation);
-        Mat44f T = make_translation({ 0.f, 0.f, -camera.zTranslation });
-        Mat44f world2camera = T * Rx * Ry;
+        Mat44f world2camera = kIdentity44f;
+        if (camera.mode == ARC_BALL)
+        {
+            Mat44f Rx = make_rotation_x(camera.rotation.y);
+            Mat44f Ry = make_rotation_y(camera.rotation.x);
+            Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
+            world2camera = T * Rx * Ry;
+        }
+        else if (camera.mode == FlY_THROUGH)
+        {
+			Mat44f Rx = make_rotation_x(camera.rotation.y);
+			Mat44f Ry = make_rotation_y(camera.rotation.x);
+            Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
+			world2camera = Rx * Ry * T;
+		}
+        else if (camera.mode == TOP_DOWN)
+        {
+            world2camera = kIdentity44f;
+        }
+        else if (camera.mode == THIRD_PERSON)
+        {
+            world2camera = kIdentity44f;
+        }
 
         Mat44f projection = make_perspective_projection(
             60.f * 3.1415926f / 180.f, // fov = 60 degrees
-            iwidth / float(iheight),
+            nwidth / float(nheight),
             0.1f, 100.0f
         );
 
@@ -176,8 +212,7 @@ int main()
         );
 
         // Camera
-        Vec3f cameraPosition = { 0.f, 0.f, camera.zTranslation };
-        glUniform3f(2, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+        glUniform3f(2, camera.position.x, camera.position.y, camera.position.z);
 
         // Enable alpha blending
         glEnable(GL_BLEND);
@@ -239,16 +274,16 @@ namespace
                 if (GLFW_KEY_W == key)
                 {
                     if (GLFW_PRESS == action)
-                        camera->moveForward = true;
+                        camera->move.forward = true;
                     else if (GLFW_RELEASE == action)
-                        camera->moveForward = false;
+                        camera->move.forward = false;
                 }
                 else if (GLFW_KEY_S == key)
                 {
                     if (GLFW_PRESS == action)
-                        camera->moveBackwards = true;
+                        camera->move.backwards = true;
                     else if (GLFW_RELEASE == action)
-                        camera->moveBackwards = false;
+                        camera->move.backwards = false;
                 }
             }
         }
@@ -263,13 +298,13 @@ namespace
                 auto const dx = float(xPos - camera->lastXPos);
                 auto const dy = float(yPos - camera->lastYPos);
 
-                camera->xRotation += dx * MOUSE_SENSITIVITY;
-                camera->yRotation += dy * MOUSE_SENSITIVITY;
+                camera->rotation.x += dx * MOUSE_SENSITIVITY;
+                camera->rotation.y += dy * MOUSE_SENSITIVITY;
 
-                if (camera->yRotation > PI / 2.f)
-                    camera->yRotation = PI / 2.f;
-                else if (camera->yRotation < -PI / 2.f)
-                    camera->yRotation = -PI / 2.f;
+                if (camera->rotation.y > PI / 2.f)
+                    camera->rotation.y = PI / 2.f;
+                else if (camera->rotation.y < -PI / 2.f)
+                    camera->rotation.y = -PI / 2.f;
             }
 
             camera->lastXPos = float(xPos);
