@@ -10,6 +10,7 @@
 #include "Mesh.hpp"
 #include "cone.hpp"
 #include "loadobj.hpp"
+#include "../math/mat44.hpp"
 
 extern "C"
 {
@@ -123,7 +124,7 @@ int main()
 
     // Define objects
     //Render object = Render(load_wavefront_obj("assets/Armadillo.obj"));
-    Render object = Render(make_cone());
+    Render object = Render(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))

@@ -71,22 +71,22 @@ void Render::render(Shader shader)
     glUniform1f(loc, mat.alpha);
 
     // Lights
-    Vec3f LightPos = { 0.f, 2.f, 0.f };
-    Vec3f ambientLight = { 0.03f, 0.03f, 0.03f };
-    Vec3f diffuseLight = { 4.5f, 4.5f, 3.f };
-    Vec3f specularLight = { 0.5f, 0.5f, 0.5f };
+    Vec3f lightPosition = { 0.f, 3.f, 5.f };
+    Vec3f ambientLight = { 0.05f, 0.05f, 0.05f };
+    Vec3f lightColor = { 1.f, 1.f, 1.f };
+    float lightStrength = 100.f;
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Position");
-    glUniform3f(loc, LightPos.x, LightPos.y, LightPos.z);
+    glUniform3f(loc, lightPosition.x, lightPosition.y, lightPosition.z);
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Ambient");
     glUniform3f(loc, ambientLight.x, ambientLight.y, ambientLight.z);
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "light.Diffuse");
-    glUniform3f(loc, diffuseLight.x, diffuseLight.y, diffuseLight.z);
+    loc = glGetUniformLocation(shader.data.shaderProgram, "light.Color");
+    glUniform3f(loc, lightColor.x, lightColor.y, lightColor.z);
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "light.Specular");
-    glUniform3f(loc, specularLight.x, specularLight.y, specularLight.z);
+    loc = glGetUniformLocation(shader.data.shaderProgram, "light.Strength");
+    glUniform1f(loc, lightStrength);
 
     // Camera
     Vec3f camera = { 0.f, 0.f, 0.f };

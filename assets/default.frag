@@ -2,9 +2,9 @@
 
 struct Material
 {
-        vec3 Ambient; // K_a
-        vec3 Diffuse; // K_d
-        vec3 Specular; // K_s
+        vec3 Ambient; // k_a
+        vec3 Diffuse; // k_d
+        vec3 Specular; // k_s
         vec3 Emission; // I_e
         float Shininess; // a'
 		float Alpha; // alpha (transparency)
@@ -14,8 +14,8 @@ struct Light
 {
 		vec3 Position; // P_light
 		vec3 Ambient; // I_a
-		vec3 Diffuse; // I_d
-		vec3 Specular; // I_s
+		vec3 Color; // I_l
+		float Strength;
 };
 
 // Input data
@@ -33,29 +33,26 @@ layout( location = 0 ) out vec4 oColor;
 
 void main()
 {
-	// get distance between light and fragment and make 
-	// light strength depend on the distance
+	// distance between point light and current vertex
 	float dist = length( light.Position - v2fWorldPosition);
-	vec3 uLightDiffuse = light.Diffuse / (dist * dist);
-	vec3 uLightSpecular = light.Specular / (dist * dist);
+	dist = dist * dist;
+
+	// light strength dependent on distance
+	vec3 light_color = light.Color * light.Strength / dist;
 	
-	// I_p = K_a*I_a + K_d*I_d(N^.L^)_+ + K_s*I_s(H^.N^)_+^a' + I_e
 	vec3 L = normalize( light.Position - v2fWorldPosition); // L^
 	vec3 N = normalize( v2fNormal ); // N^
 	vec3 V = normalize( camera - v2fWorldPosition); // V^
 	vec3 H = normalize( L + V ); // H^
-
-	float nDotL = max( 0.0, dot( N, L ) );
-	float hDotN = pow(max( 0.0, dot( H, N )), material.Shininess);
-
-	if(light.Position == vec3(0.0, 1.2, 0.1))
-	{
-		oColor = vec4(N, material.Alpha);
-	}
-	else
+	
+	float NdotL = max( 0.0, dot( N, L ) );
+	float HdotN = pow(max( 0.0, dot( H, N )), material.Shininess);
+	
+	// Corrected Blinn-Phong
+	// I_p = k_a * I_a + k_d * I_l/pi * (N^*L^)_+ + (a' + 2)/8 k_s * I_l * (H^*N^)_+^a' + I_e
 	oColor = vec4(material.Ambient * light.Ambient + 
-			 material.Diffuse * uLightDiffuse * nDotL + 
-			 material.Specular * uLightSpecular * hDotN + 
+			 material.Diffuse * light_color / 3.1415926 * NdotL + 
+			 (material.Shininess + 2) / 8 * material.Specular * light_color * HdotN + 
 			 material.Emission, material.Alpha);
 
 }
