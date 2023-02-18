@@ -120,7 +120,7 @@ int main()
     float angle = 0.f;
     
     // Set up shaders
-    Shader shader = Shader("assets/default.vert", "assets/default.frag");
+    Shader shader = Shader("assets/BlinnPhong.vert", "assets/BlinnPhong.frag");
 
     // Define objects
     //Render object = Render(load_wavefront_obj("assets/Armadillo.obj"));
