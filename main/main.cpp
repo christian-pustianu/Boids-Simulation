@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include "Shader.hpp"
-#include "Render.hpp"
+#include "Model.hpp"
 #include "Mesh.hpp"
 #include "cone.hpp"
 #include "loadobj.hpp"
@@ -26,12 +26,12 @@ namespace
 
     constexpr float PI = 3.1415926f;
 
-    constexpr float CAMERA_MOVEMENT = 10.f;
+    constexpr float CAMERA_MOVEMENT = 50.f;
     constexpr float MOUSE_SENSITIVITY = 0.01f;
 
-    constexpr unsigned int ARC_BALL = 1;
-    constexpr unsigned int FlY_THROUGH = 2;
-    constexpr unsigned int TOP_DOWN = 3;
+    constexpr unsigned int LOCKED_ARC_BALL = 1;
+    constexpr unsigned int TOP_DOWN = 2;
+    constexpr unsigned int FlY_THROUGH = 3;
     constexpr unsigned int THIRD_PERSON = 4;
 
     struct CameraState
@@ -40,8 +40,8 @@ namespace
         struct move { bool forward, backwards, left, right, up, down; } move;
 
         Vec2f rotation = { 0.f, 0.f };
-        Vec3f position = { 0.f, 0.f, 5.f };
-        unsigned int mode = ARC_BALL; // default mode
+        Vec3f position = { 0.f, 0.f, 50.f };
+        unsigned int mode = LOCKED_ARC_BALL; // default mode
 
         float yaw = -90.f;
         float pitch = 0.f;
@@ -99,7 +99,6 @@ int main()
 
     // Initialize camera
     CameraState camera{};
-    camera.position.z = 5.f;
 
     // Set up glfw event handling
     glfwSetWindowUserPointer(window, &camera);
@@ -133,8 +132,12 @@ int main()
     Shader shader = Shader("assets/BlinnPhong.vert", "assets/BlinnPhong.frag");
 
     // Define objects
-    //Render object = Render(load_wavefront_obj("assets/Armadillo.obj"));
-    Render object = Render(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    //Render armadillo = Render(load_wavefront_obj("assets/Armadillo.obj"));
+    Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
+    Boid boid = Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    boid.model2world = make_translation({ 0.f, 2.f, 0.f });
+
+    std::vector<Boid> boids;
 
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
@@ -161,7 +164,7 @@ int main()
 
         float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
-        if (camera.mode == ARC_BALL)
+        if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN)
         {
             if (camera.move.forward)
                 camera.position.z -= measurmentUnit;
@@ -171,8 +174,7 @@ int main()
             if (camera.position.z <= 0.1f)
                 camera.position.z = 0.1f;
         }
-
-        if (camera.mode == FlY_THROUGH)
+        else if (camera.mode == FlY_THROUGH)
         {
             if (camera.move.forward)
                 camera.position += camera.front * measurmentUnit;
@@ -190,31 +192,33 @@ int main()
 
         angle += 0.5f * dt;
 
-        // Set up projection to screen
-        Mat44f model2world = make_rotation_z(0);
-
         // world2camera matrix for different camera modes
         Mat44f world2camera = Identity44f;
-        if (camera.mode == ARC_BALL)
+        if (camera.mode == LOCKED_ARC_BALL)
         {
-            Mat44f Rx = make_rotation_x(camera.rotation.y);
+            Mat44f Rx = make_rotation_x(radians(30.f));
             Mat44f Ry = make_rotation_y(camera.rotation.x);
             Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
             world2camera = T * Rx * Ry;
         }
         else if (camera.mode == FlY_THROUGH)
         {
-            world2camera = look_at(camera.position, camera.front, { 0.f, 1.f, 0.f });
+            world2camera = look_at(camera.position, camera.front, camera.up);
 		}
         else if (camera.mode == TOP_DOWN)
         {
-            world2camera = Identity44f;
+            Mat44f Rx = make_rotation_x(radians(90.f));
+            Mat44f Ry = make_rotation_y(camera.rotation.x);
+            Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
+            world2camera = T * Rx * Ry;
         }
         else if (camera.mode == THIRD_PERSON)
         {
             world2camera = Identity44f;
         }
 
+
+        // Set up projection to screen
         Mat44f projection = make_perspective_projection(
             60.f * 3.1415926f / 180.f, // fov = 60 degrees
             nwidth / float(nheight),
@@ -230,11 +234,6 @@ int main()
             1, GL_TRUE, world2projection.v
         );
 
-        glUniformMatrix4fv(
-            1,
-            1, GL_TRUE, model2world.v
-        );
-
         // Camera
         glUniform3f(2, camera.position.x, camera.position.y, camera.position.z);
 
@@ -245,16 +244,22 @@ int main()
         // Draw blended objects
 
         glDisable(GL_BLEND);
+
+        // Object position in world
+        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(100.f, 0.f, 100.f);
+        boid.model2world *= make_translation({ 0.05f, 0.f, 0.f });
         
         // Render objects with specified shader
-        object.render(shader);
+        terrain.render(shader);
+        boid.render(shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     // Clean-up
-    object.~Render();
+    terrain.~Model();
+    boid.~Boid();
     shader.~Shader();
 
     glfwTerminate();
@@ -297,11 +302,11 @@ namespace
             {
                 // Camera mode
                 if (GLFW_KEY_1 == key && GLFW_PRESS == action)
-					camera->mode = ARC_BALL;
+					camera->mode = LOCKED_ARC_BALL;
 				else if (GLFW_KEY_2 == key && GLFW_PRESS == action)
-					camera->mode = FlY_THROUGH;
-				else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
 					camera->mode = TOP_DOWN;
+				else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
+					camera->mode = FlY_THROUGH;
 				else if (GLFW_KEY_4 == key && GLFW_PRESS == action)
 					camera->mode = THIRD_PERSON;
 
@@ -360,17 +365,15 @@ namespace
         {
             if (camera->active)
             {
-                if (camera->mode == ARC_BALL)
+                if (camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN)
                 {
                     // Lock the cursor on the middle of the screen
                     int nwidth, nheight;
                     glfwGetFramebufferSize(window, &nwidth, &nheight);
                     glfwSetCursorPos(window, float(nwidth / 2), float(nheight / 2));
                     float dx = float(xPos) - float(nwidth / 2);
-                    float dy = float(yPos) - float(nheight / 2);
 
                     camera->rotation.x += dx * MOUSE_SENSITIVITY;
-                    camera->rotation.y += dy * MOUSE_SENSITIVITY;
                 }
                 else if (camera->mode == FlY_THROUGH)
                 {

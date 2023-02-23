@@ -1,10 +1,10 @@
-#include "Render.hpp"
+#include "Model.hpp"
 
 #define POSITIONS 0
 #define NORMALS 1
 
 
-RenderData Render::setupRendering(Mesh const& mesh)
+RenderData Model::setupRendering(Mesh const& mesh)
 {
     RenderData data;
 
@@ -47,7 +47,7 @@ RenderData Render::setupRendering(Mesh const& mesh)
     return data;
 }
 
-void Render::render(Shader shader)
+void Model::render(Shader shader)
 {
     glUseProgram(shader.data.shaderProgram);
 
@@ -70,11 +70,16 @@ void Render::render(Shader shader)
     loc = glGetUniformLocation(shader.data.shaderProgram, "material.Alpha");
     glUniform1f(loc, mat.alpha);
 
+    glUniformMatrix4fv(
+        1,
+        1, GL_TRUE, this->model2world.v
+    );
+
     // Lights
-    Vec3f lightPosition = { 0.f, 3.f, 5.f };
+    Vec3f lightPosition = { 0.f, 50.f, 0.f };
     Vec3f ambientLight = { 0.05f, 0.05f, 0.05f };
     Vec3f lightColor = { 1.f, 1.f, 1.f };
-    float lightStrength = 100.f;
+    float lightStrength = 10000.f;
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Position");
     glUniform3f(loc, lightPosition.x, lightPosition.y, lightPosition.z);
@@ -87,12 +92,6 @@ void Render::render(Shader shader)
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Strength");
     glUniform1f(loc, lightStrength);
-
-    // Camera
-    Vec3f camera = { 0.f, 0.f, 0.f };
-    loc = glGetUniformLocation(shader.data.shaderProgram, "camera");
-    glUniform3f(loc, camera.x, camera.y, camera.z);
-
 
     glBindVertexArray(this->data.VAO);
     glDrawArrays(GL_TRIANGLES, 0, this->vertexCount);

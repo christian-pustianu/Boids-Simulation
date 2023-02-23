@@ -154,3 +154,10 @@ Vec3f normalize( Vec3f vector ) noexcept
 	auto const l = length( vector );
 	return vector / l;
 }
+
+// Linear interpolation between two vectors
+inline
+Vec3f lerp(Vec3f vector1, Vec3f vector2, float weight) noexcept
+{
+	return vector1 + weight * (vector2 - vector1);
+}

@@ -4,13 +4,16 @@
 #include "Shader.hpp"
 #include "Mesh.hpp"
 
+#include "../math/mat44.hpp"
+#include "../math/vec3.hpp"
+
 struct RenderData
 {
 	std::vector<GLuint> VBO;
 	GLuint VAO = 0;
 };
 
-class Render
+class Model
 {	
 private:
 	void cleanup() {
@@ -24,14 +27,16 @@ public:
 	RenderData data;
 	Material mat;
 	std::size_t vertexCount;
+
+	Mat44f model2world = Identity44f;
 	
-	Render(Mesh mesh) {
+	Model(Mesh mesh) {
 		data = setupRendering(mesh);
 		vertexCount = mesh.vertices.size();
 		mat = mesh.material;
 	};
 
-	~Render() {
+	~Model() {
 		cleanup();
 	};
 	
@@ -39,3 +44,15 @@ public:
 	void render(Shader shader);
 };
 
+class Boid : public Model
+{
+	public:
+	Boid(Mesh mesh) : Model(mesh) {};
+
+	Vec3f currentDirection = {};
+	Vec3f targetDirection = {};
+
+	void updateDirection(float weight) {
+		lerp(currentDirection, targetDirection, weight);
+	};
+};

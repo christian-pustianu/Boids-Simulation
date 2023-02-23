@@ -70,6 +70,26 @@ Vec4f operator*(Mat44f const& leftSide, Vec4f const& rightSide) noexcept
 	return result;
 }
 
+constexpr
+Mat44f operator*=(Mat44f& leftSide, Mat44f const& rightSide) noexcept
+{
+	Mat44f result = {};
+	float sum = 0;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			sum = 0;
+			for (int k = 0; k < 4; k++) {
+				sum += leftSide(i, k) * rightSide(k, j);
+			}
+			result(i, j) = sum;
+		}
+	}
+	for (int i = 0; i < 16; i++) {
+		leftSide.v[i] = result.v[i];
+	}
+	return leftSide;
+}
+
 // Functions:
 Mat44f invert(Mat44f const& Matrix) noexcept;
 
