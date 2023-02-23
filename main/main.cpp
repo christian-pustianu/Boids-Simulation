@@ -29,10 +29,10 @@ namespace
     constexpr float CAMERA_MOVEMENT = 10.f;
     constexpr float MOUSE_SENSITIVITY = 0.01f;
 
-    constexpr unsigned int ARC_BALL = 0;
-    constexpr unsigned int FlY_THROUGH = 1;
-    constexpr unsigned int TOP_DOWN = 2;
-    constexpr unsigned int THIRD_PERSON = 3;
+    constexpr unsigned int ARC_BALL = 1;
+    constexpr unsigned int FlY_THROUGH = 2;
+    constexpr unsigned int TOP_DOWN = 3;
+    constexpr unsigned int THIRD_PERSON = 4;
 
     struct CameraState
     {
@@ -40,16 +40,25 @@ namespace
         struct move { bool forward, backwards, left, right, up, down; } move;
 
         Vec2f rotation = { 0.f, 0.f };
-        Vec3f position = { 0.f, 0.f, 0.f };
+        Vec3f position = { 0.f, 0.f, 5.f };
         unsigned int mode = ARC_BALL; // default mode
 
+        float yaw = -90.f;
+        float pitch = 0.f;
+
         float lastXPos, lastYPos;
+        Vec3f front = { 0.f, 0.f, -1.f };
+        Vec3f up = { 0.f, 1.f, 0.f };
     };
 
     // Callaback definitions for glfw
     void error_callback(int, const char*);
     void key_callback(GLFWwindow*, int, int, int, int);
     void cursor_position_callback(GLFWwindow*, double, double);
+
+    float radians(float degrees) {
+        return degrees * (PI / 180.f);
+    }
 }
 
 
@@ -150,24 +159,42 @@ int main()
         float dt = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1>>>(now - last).count();
         last = now;
 
+        float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
         if (camera.mode == ARC_BALL)
         {
             if (camera.move.forward)
-                camera.position.z -= CAMERA_MOVEMENT * dt;
+                camera.position.z -= measurmentUnit;
             else if (camera.move.backwards)
-                camera.position.z += CAMERA_MOVEMENT * dt;
+                camera.position.z += measurmentUnit;
 
             if (camera.position.z <= 0.1f)
                 camera.position.z = 0.1f;
         }
 
+        if (camera.mode == FlY_THROUGH)
+        {
+            if (camera.move.forward)
+                camera.position += camera.front * measurmentUnit;
+            else if (camera.move.backwards)
+                camera.position -= camera.front * measurmentUnit;
+            else if (camera.move.left)
+                camera.position -= normalize(cross(camera.front, camera.up)) * measurmentUnit;
+            else if (camera.move.right)
+                camera.position += normalize(cross(camera.front, camera.up)) * measurmentUnit;
+            else if (camera.move.up)
+				camera.position += camera.up * measurmentUnit;
+			else if (camera.move.down)
+				camera.position -= camera.up * measurmentUnit;
+        }
+
         angle += 0.5f * dt;
 
         // Set up projection to screen
-        Mat44f model2world = make_rotation_z(angle);
+        Mat44f model2world = make_rotation_z(0);
 
-        Mat44f world2camera = kIdentity44f;
+        // world2camera matrix for different camera modes
+        Mat44f world2camera = Identity44f;
         if (camera.mode == ARC_BALL)
         {
             Mat44f Rx = make_rotation_x(camera.rotation.y);
@@ -177,18 +204,15 @@ int main()
         }
         else if (camera.mode == FlY_THROUGH)
         {
-			Mat44f Rx = make_rotation_x(camera.rotation.y);
-			Mat44f Ry = make_rotation_y(camera.rotation.x);
-            Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
-			world2camera = Rx * Ry * T;
+            world2camera = look_at(camera.position, camera.front, { 0.f, 1.f, 0.f });
 		}
         else if (camera.mode == TOP_DOWN)
         {
-            world2camera = kIdentity44f;
+            world2camera = Identity44f;
         }
         else if (camera.mode == THIRD_PERSON)
         {
-            world2camera = kIdentity44f;
+            world2camera = Identity44f;
         }
 
         Mat44f projection = make_perspective_projection(
@@ -271,6 +295,32 @@ namespace
             // Camera controls if camera is active
             if (camera->active)
             {
+                // Camera mode
+                if (GLFW_KEY_1 == key && GLFW_PRESS == action)
+					camera->mode = ARC_BALL;
+				else if (GLFW_KEY_2 == key && GLFW_PRESS == action)
+					camera->mode = FlY_THROUGH;
+				else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
+					camera->mode = TOP_DOWN;
+				else if (GLFW_KEY_4 == key && GLFW_PRESS == action)
+					camera->mode = THIRD_PERSON;
+
+                // Movement controls
+                if (GLFW_KEY_A == key)
+                {
+					if (GLFW_PRESS == action)
+						camera->move.left = true;
+					else if (GLFW_RELEASE == action)
+						camera->move.left = false;
+				}
+                else if (GLFW_KEY_D == key)
+                {
+					if (GLFW_PRESS == action)
+						camera->move.right = true;
+					else if (GLFW_RELEASE == action)
+						camera->move.right = false;
+				}
+
                 if (GLFW_KEY_W == key)
                 {
                     if (GLFW_PRESS == action)
@@ -285,6 +335,21 @@ namespace
                     else if (GLFW_RELEASE == action)
                         camera->move.backwards = false;
                 }
+
+                if (GLFW_KEY_E == key)
+                {
+					if (GLFW_PRESS == action)
+						camera->move.up = true;
+					else if (GLFW_RELEASE == action)
+						camera->move.up = false;
+				}
+                else if (GLFW_KEY_Q == key)
+                {
+					if (GLFW_PRESS == action)
+						camera->move.down = true;
+					else if (GLFW_RELEASE == action)
+						camera->move.down = false;
+				}
             }
         }
     }
@@ -295,20 +360,45 @@ namespace
         {
             if (camera->active)
             {
-                auto const dx = float(xPos - camera->lastXPos);
-                auto const dy = float(yPos - camera->lastYPos);
+                if (camera->mode == ARC_BALL)
+                {
+                    // Lock the cursor on the middle of the screen
+                    int nwidth, nheight;
+                    glfwGetFramebufferSize(window, &nwidth, &nheight);
+                    glfwSetCursorPos(window, float(nwidth / 2), float(nheight / 2));
+                    float dx = float(xPos) - float(nwidth / 2);
+                    float dy = float(yPos) - float(nheight / 2);
 
-                camera->rotation.x += dx * MOUSE_SENSITIVITY;
-                camera->rotation.y += dy * MOUSE_SENSITIVITY;
+                    camera->rotation.x += dx * MOUSE_SENSITIVITY;
+                    camera->rotation.y += dy * MOUSE_SENSITIVITY;
+                }
+                else if (camera->mode == FlY_THROUGH)
+                {
+                    // Lock the cursor on the middle of the screen
+                    int nwidth, nheight;
+                    glfwGetFramebufferSize(window, &nwidth, &nheight);
+                    glfwSetCursorPos(window, float(nwidth / 2), float(nheight / 2));
+                    float xoffset = float(xPos) - float(nwidth / 2);
+                    float yoffset = float(nheight / 2) - float(yPos);
 
-                if (camera->rotation.y > PI / 2.f)
-                    camera->rotation.y = PI / 2.f;
-                else if (camera->rotation.y < -PI / 2.f)
-                    camera->rotation.y = -PI / 2.f;
+                    xoffset *= MOUSE_SENSITIVITY * 10.f;
+                    yoffset *= MOUSE_SENSITIVITY * 10.f;
+
+                    camera->yaw += xoffset;
+                    camera->pitch += yoffset;
+
+                    if (camera->pitch > 89.0f)
+                        camera->pitch = 89.0f;
+                    if (camera->pitch < -89.0f)
+                        camera->pitch = -89.0f;
+
+                    Vec3f front;
+                    front.x = cosf(radians(camera->yaw)) * cosf(radians(camera->pitch));
+                    front.y = sinf(radians(camera->pitch));
+                    front.z = sinf(radians(camera->yaw)) * cosf(radians(camera->pitch));
+                    camera->front = normalize(front);
+                }
             }
-
-            camera->lastXPos = float(xPos);
-            camera->lastYPos = float(yPos);
         }
     }
 }

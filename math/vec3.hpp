@@ -1,146 +1,156 @@
-#ifndef VEC3_HPP_5710DADF_17EF_453C_A9C8_4A73DC66B1CD
-#define VEC3_HPP_5710DADF_17EF_453C_A9C8_4A73DC66B1CD
+// Code adapted from coursework and exercises of the 2022-2023 Semester 1
+// module "COMP3811 Computer Graphics" at the University of Leeds.
+
+#pragma once
 
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
 
+// Vec3f: 3D vector with floats
 struct Vec3f
 {
 	float x, y, z;
 
-	constexpr 
+	constexpr
 	float& operator[] (std::size_t aI) noexcept
 	{
 		assert( aI < 3 );
-		return aI[&x]; // This is a bit sketchy, but concise and efficient.
+		return aI[&x];
 	}
-	constexpr 
+	constexpr
 	float operator[] (std::size_t aI) const noexcept
 	{
 		assert( aI < 3 );
-		return aI[&x]; // This is a bit sketchy.
+		return aI[&x];
 	}
 };
 
-
+// Common operators for Vec3f:
 constexpr
-Vec3f operator+( Vec3f aVec ) noexcept
+Vec3f operator+( Vec3f vector ) noexcept
 {
-	return aVec;
-}
-constexpr
-Vec3f operator-( Vec3f aVec ) noexcept
-{
-	return { -aVec.x, -aVec.y, -aVec.z };
+	return vector;
 }
 
 constexpr
-Vec3f operator+( Vec3f aLeft, Vec3f aRight ) noexcept
+Vec3f operator-( Vec3f vector ) noexcept
+{
+	return { -vector.x, -vector.y, -vector.z };
+}
+
+constexpr
+Vec3f operator+( Vec3f leftSide, Vec3f rightSide ) noexcept
 {
 	return Vec3f{
-		aLeft.x + aRight.x,
-		aLeft.y + aRight.y,
-		aLeft.z + aRight.z
+		leftSide.x + rightSide.x,
+		leftSide.y + rightSide.y,
+		leftSide.z + rightSide.z
 	};
 }
+
 constexpr
-Vec3f operator-( Vec3f aLeft, Vec3f aRight ) noexcept
+Vec3f operator-( Vec3f leftSide, Vec3f rightSide ) noexcept
 {
 	return Vec3f{
-		aLeft.x - aRight.x,
-		aLeft.y - aRight.y,
-		aLeft.z - aRight.z
+		leftSide.x - rightSide.x,
+		leftSide.y - rightSide.y,
+		leftSide.z - rightSide.z
 	};
 }
 
-
 constexpr
-Vec3f operator*( float aScalar, Vec3f aVec ) noexcept
+Vec3f operator*( float scalar, Vec3f vector ) noexcept
 {
 	return Vec3f{ 
-		aScalar * aVec.x, 
-		aScalar * aVec.y, 
-		aScalar * aVec.z
+		scalar * vector.x, 
+		scalar * vector.y, 
+		scalar * vector.z
 	};
-}
-constexpr
-Vec3f operator*( Vec3f aVec, float aScalar ) noexcept
-{
-	return aScalar * aVec;
 }
 
 constexpr
-Vec3f operator/( Vec3f aVec, float aScalar ) noexcept
+Vec3f operator*( Vec3f vector, float scalar ) noexcept
+{
+	return scalar * vector;
+}
+
+constexpr
+Vec3f operator/( Vec3f vector, float scalar ) noexcept
 {
 	return Vec3f{ 
-		aVec.x / aScalar,
-		aVec.y / aScalar,
-		aVec.z / aScalar
+		vector.x / scalar,
+		vector.y / scalar,
+		vector.z / scalar
 	};
 }
 
-
 constexpr
-Vec3f& operator+=( Vec3f& aLeft, Vec3f aRight ) noexcept
+Vec3f& operator+=( Vec3f& leftSide, Vec3f rightSide ) noexcept
 {
-	aLeft.x += aRight.x;
-	aLeft.y += aRight.y;
-	aLeft.z += aRight.z;
-	return aLeft;
-}
-constexpr
-Vec3f& operator-=( Vec3f& aLeft, Vec3f aRight ) noexcept
-{
-	aLeft.x -= aRight.x;
-	aLeft.y -= aRight.y;
-	aLeft.z -= aRight.z;
-	return aLeft;
+	leftSide.x += rightSide.x;
+	leftSide.y += rightSide.y;
+	leftSide.z += rightSide.z;
+	return leftSide;
 }
 
 constexpr
-Vec3f& operator*=( Vec3f& aLeft, float aRight ) noexcept
+Vec3f& operator-=( Vec3f& leftSide, Vec3f rightSide ) noexcept
 {
-	aLeft.x *= aRight;
-	aLeft.y *= aRight;
-	aLeft.z *= aRight;
-	return aLeft;
-}
-constexpr
-Vec3f& operator/=( Vec3f& aLeft, float aRight ) noexcept
-{
-	aLeft.x /= aRight;
-	aLeft.y /= aRight;
-	aLeft.z /= aRight;
-	return aLeft;
+	leftSide.x -= rightSide.x;
+	leftSide.y -= rightSide.y;
+	leftSide.z -= rightSide.z;
+	return leftSide;
 }
 
-
-// A few common functions:
+constexpr
+Vec3f& operator*=( Vec3f& leftSide, float rightSide ) noexcept
+{
+	leftSide.x *= rightSide;
+	leftSide.y *= rightSide;
+	leftSide.z *= rightSide;
+	return leftSide;
+}
 
 constexpr
-float dot( Vec3f aLeft, Vec3f aRight ) noexcept
+Vec3f& operator/=( Vec3f& leftSide, float rightSide ) noexcept
 {
-	return aLeft.x * aRight.x 
-		+ aLeft.y * aRight.y
-		+ aLeft.z * aRight.z
+	leftSide.x /= rightSide;
+	leftSide.y /= rightSide;
+	leftSide.z /= rightSide;
+	return leftSide;
+}
+
+
+// Functions:
+constexpr
+float dot( Vec3f leftSide, Vec3f rightSide ) noexcept
+{
+	return leftSide.x * rightSide.x 
+		+ leftSide.y * rightSide.y
+		+ leftSide.z * rightSide.z
 	;
 }
 
 inline
-float length( Vec3f aVec ) noexcept
+float length( Vec3f vector ) noexcept
 {
-	// The standard function std::sqrt() is not marked as constexpr. length()
-	// calls std::sqrt() unconditionally, so length() cannot be marked
-	// constexpr itself.
-	return std::sqrt( dot( aVec, aVec ) );
+	return std::sqrt( dot( vector, vector ) );
 }
 
 inline
-Vec3f normalize( Vec3f aVec ) noexcept
+Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept
 {
-	auto const l = length( aVec );
-	return aVec / l;
+	return Vec3f{
+		leftSide.y * rightSide.z - leftSide.z * rightSide.y,
+		leftSide.z * rightSide.x - leftSide.x * rightSide.z,
+		leftSide.x * rightSide.y - leftSide.y * rightSide.x
+	};
 }
 
-#endif // VEC3_HPP_5710DADF_17EF_453C_A9C8_4A73DC66B1CD
+inline
+Vec3f normalize( Vec3f vector ) noexcept
+{
+	auto const l = length( vector );
+	return vector / l;
+}

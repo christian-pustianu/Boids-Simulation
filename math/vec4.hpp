@@ -1,10 +1,13 @@
-#ifndef VEC4_HPP_7524F057_7AA7_4C99_AA52_DB0B5A3F8CAA
-#define VEC4_HPP_7524F057_7AA7_4C99_AA52_DB0B5A3F8CAA
+// Code adapted from coursework and exercises of the 2022-2023 Semester 1
+// module "COMP3811 Computer Graphics" at the University of Leeds.
+
+#pragma once
 
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
 
+// Vec2f: 4D vector with floats
 struct Vec4f
 {
 	float x, y, z, w;
@@ -13,137 +16,129 @@ struct Vec4f
 	float& operator[] (std::size_t aI) noexcept
 	{
 		assert( aI < 4 );
-		return aI[&x]; // This is a bit sketchy, but concise and efficient.
+		return aI[&x];
 	}
 	constexpr 
 	float operator[] (std::size_t aI) const noexcept
 	{
 		assert( aI < 4 );
-		return aI[&x]; // This is a bit sketchy.
+		return aI[&x];
 	}
 };
 
-
+// Common operators for Vec4f:
 constexpr
-Vec4f operator+( Vec4f aVec ) noexcept
+Vec4f operator+( Vec4f vector ) noexcept
 {
-	return aVec;
+	return vector;
 }
 constexpr
-Vec4f operator-( Vec4f aVec ) noexcept
+Vec4f operator-( Vec4f vector ) noexcept
 {
-	return { -aVec.x, -aVec.y, -aVec.z, -aVec.w };
+	return { -vector.x, -vector.y, -vector.z, -vector.w };
 }
 
 constexpr
-Vec4f operator+( Vec4f aLeft, Vec4f aRight ) noexcept
+Vec4f operator+( Vec4f leftSide, Vec4f rightSide ) noexcept
 {
 	return Vec4f{
-		aLeft.x + aRight.x,
-		aLeft.y + aRight.y,
-		aLeft.z + aRight.z,
-		aLeft.w + aRight.w
+		leftSide.x + rightSide.x,
+		leftSide.y + rightSide.y,
+		leftSide.z + rightSide.z,
+		leftSide.w + rightSide.w
 	};
 }
 constexpr
-Vec4f operator-( Vec4f aLeft, Vec4f aRight ) noexcept
+Vec4f operator-( Vec4f leftSide, Vec4f rightSide ) noexcept
 {
 	return Vec4f{
-		aLeft.x - aRight.x,
-		aLeft.y - aRight.y,
-		aLeft.z - aRight.z,
-		aLeft.w - aRight.w
+		leftSide.x - rightSide.x,
+		leftSide.y - rightSide.y,
+		leftSide.z - rightSide.z,
+		leftSide.w - rightSide.w
 	};
 }
 
 
 constexpr
-Vec4f operator*( float aScalar, Vec4f aVec ) noexcept
+Vec4f operator*( float scalar, Vec4f vector ) noexcept
 {
 	return Vec4f{ 
-		aScalar * aVec.x, 
-		aScalar * aVec.y, 
-		aScalar * aVec.z, 
-		aScalar * aVec.w 
+		scalar * vector.x, 
+		scalar * vector.y, 
+		scalar * vector.z, 
+		scalar * vector.w 
 	};
 }
 constexpr
-Vec4f operator*( Vec4f aVec, float aScalar ) noexcept
+Vec4f operator*( Vec4f vector, float scalar ) noexcept
 {
-	return aScalar * aVec;
+	return scalar * vector;
 }
 
 constexpr
-Vec4f operator/( Vec4f aVec, float aScalar ) noexcept
+Vec4f operator/( Vec4f vector, float scalar ) noexcept
 {
 	return Vec4f{ 
-		aVec.x / aScalar,
-		aVec.y / aScalar,
-		aVec.z / aScalar,
-		aVec.w / aScalar
+		vector.x / scalar,
+		vector.y / scalar,
+		vector.z / scalar,
+		vector.w / scalar
 	};
 }
 
 
 constexpr
-Vec4f& operator+=( Vec4f& aLeft, Vec4f aRight ) noexcept
+Vec4f& operator+=( Vec4f& leftSide, Vec4f rightSide ) noexcept
 {
-	aLeft.x += aRight.x;
-	aLeft.y += aRight.y;
-	aLeft.z += aRight.z;
-	aLeft.w += aRight.w;
-	return aLeft;
+	leftSide.x += rightSide.x;
+	leftSide.y += rightSide.y;
+	leftSide.z += rightSide.z;
+	leftSide.w += rightSide.w;
+	return leftSide;
 }
 constexpr
-Vec4f& operator-=( Vec4f& aLeft, Vec4f aRight ) noexcept
+Vec4f& operator-=( Vec4f& leftSide, Vec4f rightSide ) noexcept
 {
-	aLeft.x -= aRight.x;
-	aLeft.y -= aRight.y;
-	aLeft.z -= aRight.z;
-	aLeft.w -= aRight.w;
-	return aLeft;
+	leftSide.x -= rightSide.x;
+	leftSide.y -= rightSide.y;
+	leftSide.z -= rightSide.z;
+	leftSide.w -= rightSide.w;
+	return leftSide;
 }
 
 constexpr
-Vec4f& operator*=( Vec4f& aLeft, float aRight ) noexcept
+Vec4f& operator*=( Vec4f& leftSide, float rightSide ) noexcept
 {
-	aLeft.x *= aRight;
-	aLeft.y *= aRight;
-	aLeft.z *= aRight;
-	aLeft.w *= aRight;
-	return aLeft;
+	leftSide.x *= rightSide;
+	leftSide.y *= rightSide;
+	leftSide.z *= rightSide;
+	leftSide.w *= rightSide;
+	return leftSide;
 }
 constexpr
-Vec4f& operator/=( Vec4f& aLeft, float aRight ) noexcept
+Vec4f& operator/=( Vec4f& leftSide, float rightSide ) noexcept
 {
-	aLeft.x /= aRight;
-	aLeft.y /= aRight;
-	aLeft.z /= aRight;
-	aLeft.w /= aRight;
-	return aLeft;
+	leftSide.x /= rightSide;
+	leftSide.y /= rightSide;
+	leftSide.z /= rightSide;
+	leftSide.w /= rightSide;
+	return leftSide;
 }
 
 
-// A few common functions:
-
+// Functions:
 constexpr
-float dot( Vec4f aLeft, Vec4f aRight ) noexcept
+float dot( Vec4f leftSide, Vec4f rightSide ) noexcept
 {
-	return aLeft.x * aRight.x 
-		+ aLeft.y * aRight.y
-		+ aLeft.z * aRight.z
-		+ aLeft.w * aRight.w
-	;
+	return leftSide.x * rightSide.x 
+		+ leftSide.y * rightSide.y
+		+ leftSide.z * rightSide.z
+		+ leftSide.w * rightSide.w;
 }
 
 inline
-float length( Vec4f aVec ) noexcept
+float length( Vec4f vector ) noexcept
 {
-	// The standard function std::sqrt() is not marked as constexpr. length()
-	// calls std::sqrt() unconditionally, so length() cannot be marked
-	// constexpr itself.
-	return std::sqrt( dot( aVec, aVec ) );
+	return std::sqrt( dot( vector, vector ) );
 }
-
-
-#endif // VEC4_HPP_7524F057_7AA7_4C99_AA52_DB0B5A3F8CAA

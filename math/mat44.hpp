@@ -1,5 +1,7 @@
-#ifndef MAT44_HPP_E7187A26_469E_48AD_A3D2_63150F05A4CA
-#define MAT44_HPP_E7187A26_469E_48AD_A3D2_63150F05A4CA
+// Code adapted from coursework and exercises of the 2022-2023 Semester 1
+// module "COMP3811 Computer Graphics" at the University of Leeds.
+
+#pragma once
 
 #include <cmath>
 #include <cassert>
@@ -8,25 +10,7 @@
 #include "vec3.hpp"
 #include "vec4.hpp"
 
-/** Mat44f: 4x4 matrix with floats
- *
- * See vec2f.hpp for discussion. Similar to the implementation, the Mat44f is
- * intentionally kept simple and somewhat bare bones.
- *
- * The matrix is stored in row-major order (careful when passing it to OpenGL).
- *
- * The overloaded operator () allows access to individual elements. Example:
- *    Mat44f m = ...;
- *    float m12 = m(1,2);
- *    m(0,3) = 3.f;
- *
- * The matrix is arranged as:
- *
- *   ⎛ 0,0  0,1  0,2  0,3 ⎞
- *   ⎜ 1,0  1,1  1,2  1,3 ⎟
- *   ⎜ 2,0  2,1  2,2  2,3 ⎟
- *   ⎝ 3,0  3,1  3,2  3,3 ⎠
- */
+// Mat44f: 4x4 matrix with floats
 struct Mat44f
 {
 	float v[16];
@@ -46,62 +30,76 @@ struct Mat44f
 };
 
 // Identity matrix
-constexpr Mat44f kIdentity44f = { {
+constexpr Mat44f Identity44f = { {
 	1.f, 0.f, 0.f, 0.f,
 	0.f, 1.f, 0.f, 0.f,
 	0.f, 0.f, 1.f, 0.f,
 	0.f, 0.f, 0.f, 1.f
 } };
 
-// Common operators for Mat44f.
-// Note that you will need to implement these yourself.
-
-
+// Common operators for Mat44f:
 constexpr
-Mat44f operator*(Mat44f const& aLeft, Mat44f const& aRight) noexcept
+Mat44f operator*(Mat44f const& leftSide, Mat44f const& rightSide) noexcept
 {
-	Mat44f Result = { {} };
+	Mat44f result = {};
 	float sum = 0;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			sum = 0;
 			for (int k = 0; k < 4; k++) {
-				sum += aLeft.operator()(i, k) * aRight.operator()(k, j);
+				sum += leftSide(i, k) * rightSide(k, j);
 			}
-			Result.operator()(i, j) = sum;
+			result(i, j) = sum;
 		}
 	}
-	return Result;
+	return result;
 }
 
 constexpr
-Vec4f operator*(Mat44f const& aLeft, Vec4f const& aRight) noexcept
+Vec4f operator*(Mat44f const& leftSide, Vec4f const& rightSide) noexcept
 {
-	Vec4f Result = {};
+	Vec4f result = {};
 	float sum = 0;
 	for (int i = 0; i < 4; i++) {
 		sum = 0;
 		for (int k = 0; k < 4; k++) {
-			sum += aLeft.operator()(i, k) * aRight.operator[](k);
+			sum += leftSide(i, k) * rightSide[k];
 		}
-		Result.operator[](i) = sum;
+		result[i] = sum;
 	}
-	return Result;
+	return result;
 }
 
 // Functions:
-Mat44f invert(Mat44f const& aM) noexcept;
+Mat44f invert(Mat44f const& Matrix) noexcept;
 
 inline
-Mat44f transpose(Mat44f const& aM) noexcept
+Mat44f transpose(Mat44f const& Matrix) noexcept
 {
-	Mat44f ret;
+	Mat44f result;
 	for (std::size_t i = 0; i < 4; ++i)
 	{
 		for (std::size_t j = 0; j < 4; ++j)
-			ret(j, i) = aM(i, j);
+			result(j, i) = Matrix(i, j);
 	}
-	return ret;
+	return result;
+}
+
+inline
+Mat44f look_at(Vec3f eye, Vec3f front, Vec3f up) noexcept
+{
+	Vec3f x, y, z;
+	z = normalize(-front);
+	y = up;
+	x = cross(y, z);
+	y = cross(z, x);
+	x = normalize(x);
+	y = normalize(y);
+
+	return Mat44f{ x.x, x.y, x.z, -dot(x, eye),
+				   y.x, y.y, y.z, -dot(y, eye),
+				   z.x, z.y, z.z, -dot(z, eye),
+				   0.f, 0.f, 0.f, 1.f };
 }
 
 inline
@@ -164,6 +162,3 @@ Mat44f make_perspective_projection(float aFovInRadians, float aAspect, float aNe
 				   0.f, 0.f, a, b,
 				   0.f, 0.f, -1.f, 1.f };
 }
-
-
-#endif // MAT44_HPP_E7187A26_469E_48AD_A3D2_63150F05A4CA
