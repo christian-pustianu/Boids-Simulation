@@ -34,6 +34,10 @@ namespace
     constexpr unsigned int FlY_THROUGH = 3;
     constexpr unsigned int THIRD_PERSON = 4;
 
+    constexpr float SIMULATION_X = 100.f;
+    constexpr float SIMULATION_Y = 50.f;
+    constexpr float SIMULATION_Z = 100.f;
+
     struct CameraState
     {
         bool active;
@@ -246,8 +250,11 @@ int main()
         glDisable(GL_BLEND);
 
         // Object position in world
-        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(100.f, 0.f, 100.f);
-        boid.model2world *= make_translation({ 0.05f, 0.f, 0.f });
+        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
+        printf("currentDirection: %f, %f, %f\n", boid.currentDirection.x, boid.currentDirection.y, boid.currentDirection.z);
+        printf("targetDirection: %f, %f, %f\n", boid.targetDirection.x, boid.targetDirection.y, boid.targetDirection.z);
+        boid.setTargetDirection({1.f, 0.f, 0.f});
+        boid.updateDirection(0.05f, 0.001f);
         
         // Render objects with specified shader
         terrain.render(shader);
