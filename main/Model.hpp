@@ -82,6 +82,12 @@ public:
 	}
 
 	void updateDirection(float speed, float transition) {
+		// Rotation
+		float angle = acos(dot(this->currentDirection, this->targetDirection));
+		Vec3f axis = cross(this->currentDirection, this->targetDirection);
+		this->model2world *= make_rotation_from_axis_and_angle(axis, angle * speed);
+
+		// Translation
 		this->currentDirection = lerp(this->currentDirection, this->targetDirection, transition);
 		this->model2world *= make_translation(currentDirection * speed);
 	}

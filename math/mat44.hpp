@@ -123,6 +123,22 @@ Mat44f look_at(Vec3f eye, Vec3f front, Vec3f up) noexcept
 }
 
 inline
+Mat44f make_rotation_from_axis_and_angle(Vec3f axis, float angle) noexcept
+{
+	float c = cos(angle);
+	float s = sin(angle);
+	float t = 1 - c;
+	float x = axis.x;
+	float y = axis.y;
+	float z = axis.z;
+
+	return Mat44f{ t * x * x + c, t * x * y - s * z, t * x * z + s * y, 0.f,
+					t * x * y + s * z, t * y * y + c, t * y * z - s * x, 0.f,
+					t * x * z - s * y, t * y * z + s * x, t * z * z + c, 0.f,
+					0.f, 0.f, 0.f, 1.f };
+}
+
+inline
 Mat44f make_rotation_x(float aAngle) noexcept
 {
 	return Mat44f{ 1.f, 0.f, 0.f, 0.f,

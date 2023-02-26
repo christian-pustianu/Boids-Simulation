@@ -38,6 +38,10 @@ namespace
     constexpr float SIMULATION_Y = 50.f;
     constexpr float SIMULATION_Z = 100.f;
 
+    constexpr unsigned int FRAMES = 60;
+
+    constexpr float BOID_SPEED = 5.f;
+
     struct CameraState
     {
         bool active;
@@ -143,6 +147,8 @@ int main()
 
     std::vector<Boid> boids;
 
+    unsigned int frame_number = 0;
+
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
     {
@@ -165,6 +171,8 @@ int main()
         auto const now = std::chrono::steady_clock::now();
         float dt = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1>>>(now - last).count();
         last = now;
+
+        printf("dt: %f\n", dt);
 
         float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
@@ -193,8 +201,6 @@ int main()
 			else if (camera.move.down)
 				camera.position -= camera.up * measurmentUnit;
         }
-
-        angle += 0.5f * dt;
 
         // world2camera matrix for different camera modes
         Mat44f world2camera = Identity44f;
@@ -254,7 +260,8 @@ int main()
         printf("currentDirection: %f, %f, %f\n", boid.currentDirection.x, boid.currentDirection.y, boid.currentDirection.z);
         printf("targetDirection: %f, %f, %f\n", boid.targetDirection.x, boid.targetDirection.y, boid.targetDirection.z);
         boid.setTargetDirection({1.f, 0.f, 0.f});
-        boid.updateDirection(0.05f, 0.001f);
+        float movement_speed = dt * BOID_SPEED;
+        boid.updateDirection(movement_speed, 0.005f);
         
         // Render objects with specified shader
         terrain.render(shader);
@@ -262,6 +269,10 @@ int main()
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        frame_number++;
+        if(frame_number == FRAMES)
+			frame_number = 0;
     }
 
     // Clean-up
