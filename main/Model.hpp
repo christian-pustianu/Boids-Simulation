@@ -95,7 +95,7 @@ public:
 		// Rotation
 		float angle = acos(dot(Vec3f{ 1.f, 0.f, 0.f }, this->currentDirection));
 		Vec3f axis = cross(Vec3f{ 1.f, 0.f, 0.f }, this->currentDirection);
-		this->rotationMatrix = make_rotation_from_axis_and_angle(axis, angle);
+		this->rotationMatrix = make_rotation_from_axis_and_angle(normalize(axis), angle);
 
 		// Translation
 		this->currentDirection = lerp(this->currentDirection, this->targetDirection, transition);

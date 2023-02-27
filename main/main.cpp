@@ -38,9 +38,10 @@ namespace
     constexpr float SIMULATION_Y = 50.f;
     constexpr float SIMULATION_Z = 100.f;
 
-    constexpr unsigned int FRAMES = 60;
-
     constexpr float BOID_SPEED = 5.f;
+
+    // Pause switch for the simulation
+    bool paused = false;
 
     struct CameraState
     {
@@ -134,7 +135,6 @@ int main()
 
     // Initialize time for animations
     auto last = std::chrono::steady_clock::now();
-    float angle = 0.f;
     
     // Set up shaders
     Shader shader = Shader("assets/BlinnPhong.vert", "assets/BlinnPhong.frag");
@@ -145,8 +145,6 @@ int main()
     Boid boid = Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid> boids;
-
-    unsigned int frame_number = 0;
 
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
@@ -170,8 +168,6 @@ int main()
         auto const now = std::chrono::steady_clock::now();
         float dt = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1>>>(now - last).count();
         last = now;
-
-        printf("dt: %f\n", dt);
 
         float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
@@ -256,11 +252,15 @@ int main()
 
         // Object position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
-        printf("currentDirection: %f, %f, %f\n", boid.currentDirection.x, boid.currentDirection.y, boid.currentDirection.z);
-        printf("targetDirection: %f, %f, %f\n", boid.targetDirection.x, boid.targetDirection.y, boid.targetDirection.z);
-        boid.setTargetDirection({1.f, 0.f, 0.f});
-        float movement_speed = dt * BOID_SPEED;
-        boid.updateDirection(movement_speed, 0.005f);
+        
+        if (!paused) {
+            printf("currentDirection: %f, %f, %f\n", boid.currentDirection.x, boid.currentDirection.y, boid.currentDirection.z);
+            printf("targetDirection: %f, %f, %f\n", boid.targetDirection.x, boid.targetDirection.y, boid.targetDirection.z);
+            // Doesn't work right for over 90 deg difference
+            boid.setTargetDirection({1.f, 0.f, -0.4f});
+            float movement_speed = dt * BOID_SPEED;
+            boid.updateDirection(movement_speed, 0.005f);
+        }
         
         // Render objects with specified shader
         terrain.render(shader);
@@ -268,10 +268,6 @@ int main()
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-
-        frame_number++;
-        if(frame_number == FRAMES)
-			frame_number = 0;
     }
 
     // Clean-up
@@ -300,6 +296,11 @@ namespace
             return;
         }
 
+        if (GLFW_KEY_P == key && GLFW_PRESS == action)
+        {
+            paused = !paused;
+        }
+
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window)))
         {
 
@@ -314,19 +315,19 @@ namespace
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
 
+            // Camera mode
+            if (GLFW_KEY_1 == key && GLFW_PRESS == action)
+				camera->mode = LOCKED_ARC_BALL;
+			else if (GLFW_KEY_2 == key && GLFW_PRESS == action)
+				camera->mode = TOP_DOWN;
+			else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
+				camera->mode = FlY_THROUGH;
+			else if (GLFW_KEY_4 == key && GLFW_PRESS == action)
+				camera->mode = THIRD_PERSON;
+
             // Camera controls if camera is active
             if (camera->active)
             {
-                // Camera mode
-                if (GLFW_KEY_1 == key && GLFW_PRESS == action)
-					camera->mode = LOCKED_ARC_BALL;
-				else if (GLFW_KEY_2 == key && GLFW_PRESS == action)
-					camera->mode = TOP_DOWN;
-				else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
-					camera->mode = FlY_THROUGH;
-				else if (GLFW_KEY_4 == key && GLFW_PRESS == action)
-					camera->mode = THIRD_PERSON;
-
                 // Movement controls
                 if (GLFW_KEY_A == key)
                 {
