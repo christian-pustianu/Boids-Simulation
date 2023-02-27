@@ -143,7 +143,6 @@ int main()
     //Render armadillo = Render(load_wavefront_obj("assets/Armadillo.obj"));
     Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
     Boid boid = Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
-    boid.model2world = make_translation({ 0.f, 2.f, 0.f });
 
     std::vector<Boid> boids;
 
