@@ -139,13 +139,13 @@ int main()
     // Define objects
     //Model armadillo = Model(load_wavefront_obj("assets/Armadillo.obj"));
     Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
-    //Boid boid = Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    Model boid_model = Model(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid> boids;
     srand((time(NULL)));
     for (int i = 0; i < 10; i++)
     {
-		boids.emplace_back(Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f))));
+		boids.emplace_back(Boid());
 	}
 
     // Start the rendering loop
@@ -252,7 +252,7 @@ int main()
 
         glDisable(GL_BLEND);
 
-        // Object position in world
+        // Terrain position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
 
         for (int i = 0; i < boids.size(); i++) {
@@ -263,12 +263,12 @@ int main()
                 float turn_sharpness = movement_speed * 0.2f;
                 boids.at(i).updateDirection(movement_speed, turn_sharpness);
             }
-        
-            // Render objects with specified shader
-            boids.at(i).render(shader);
+            // Instanced rendering of boid_model for every boid created
+            boid_model.render(boids.at(i).model2world, shader);
         }
 
-        terrain.render(shader);
+        // Render terrain with specified shader
+        terrain.render(terrain.model2world, shader);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

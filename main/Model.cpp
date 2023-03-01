@@ -47,10 +47,10 @@ RenderData Model::setupRendering(Mesh const& mesh)
     return data;
 }
 
-void Model::render(Shader shader)
+void Model::render(Mat44f model2world, Shader shader)
 {
     glUseProgram(shader.data.shaderProgram);
-
+    
     // material properties
     GLuint loc = glGetUniformLocation(shader.data.shaderProgram, "material.Ambient");
     glUniform3f(loc, mat.ambient.x, mat.ambient.y, mat.ambient.z);
@@ -72,7 +72,7 @@ void Model::render(Shader shader)
 
     glUniformMatrix4fv(
         1,
-        1, GL_TRUE, this->model2world.v
+        1, GL_TRUE, model2world.v
     );
 
     // Lights

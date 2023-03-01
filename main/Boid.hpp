@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Model.hpp"
 #include "../math/other.hpp"
 
-class Boid : public Model
+class Boid
 {
 private:
 	Vec3f initialDirection = { 1.f, 0.f, 0.f };
@@ -24,13 +23,13 @@ private:
 	// give random direction
 	void randomizeDirection() {
 		this->currentDirection = normalize(Vec3f{ (float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX });
-		//this->currentDirection = { 0.f, 0.f, 1.f };
 	}
 
 public:
 	Vec3f currentPosition = { 0.f, 2.f, 0.f };
+	Mat44f model2world = Identity44f;
 
-	Boid(Mesh mesh) : Model(mesh) {
+	Boid() {
 		// Spawn boid at random position and direction, going straight forward
 		randomizePosition();
 		randomizeDirection();
