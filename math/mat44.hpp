@@ -123,7 +123,7 @@ Mat44f look_at(Vec3f eye, Vec3f front, Vec3f up) noexcept
 }
 
 inline
-Mat44f make_rotation_from_axis_and_angle(Vec3f axis, float angle) noexcept
+Mat44f make_rotation_custom_axis(Vec3f axis, float angle) noexcept
 {
 	float c = cos(angle);
 	float s = sin(angle);

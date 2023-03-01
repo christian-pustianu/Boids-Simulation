@@ -8,9 +8,11 @@
 #include "Shader.hpp"
 #include "Model.hpp"
 #include "Mesh.hpp"
+#include "Boid.hpp"
 #include "cone.hpp"
 #include "loadobj.hpp"
 #include "../math/mat44.hpp"
+#include "../math/other.hpp"
 
 extern "C"
 {
@@ -24,8 +26,6 @@ namespace
     const unsigned int WINDOW_WIDTH = 1280;
     const unsigned int WINDOW_HEIGHT = 720;
 
-    constexpr float PI = 3.1415926f;
-
     constexpr float CAMERA_MOVEMENT = 50.f;
     constexpr float MOUSE_SENSITIVITY = 0.01f;
 
@@ -38,10 +38,10 @@ namespace
     constexpr float SIMULATION_Y = 50.f;
     constexpr float SIMULATION_Z = 100.f;
 
-    constexpr float BOID_SPEED = 5.f;
+    constexpr float BOID_SPEED = 10.f;
 
     // Pause switch for the simulation
-    bool paused = false;
+    bool paused = true;
 
     struct CameraState
     {
@@ -65,9 +65,6 @@ namespace
     void key_callback(GLFWwindow*, int, int, int, int);
     void cursor_position_callback(GLFWwindow*, double, double);
 
-    float radians(float degrees) {
-        return degrees * (PI / 180.f);
-    }
 }
 
 
@@ -140,11 +137,16 @@ int main()
     Shader shader = Shader("assets/BlinnPhong.vert", "assets/BlinnPhong.frag");
 
     // Define objects
-    //Render armadillo = Render(load_wavefront_obj("assets/Armadillo.obj"));
+    //Model armadillo = Model(load_wavefront_obj("assets/Armadillo.obj"));
     Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
-    Boid boid = Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    //Boid boid = Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid> boids;
+    srand((time(NULL)));
+    for (int i = 0; i < 10; i++)
+    {
+		boids.emplace_back(Boid(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f))));
+	}
 
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
@@ -252,27 +254,30 @@ int main()
 
         // Object position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
-        
-        if (!paused) {
-            printf("currentDirection: %f, %f, %f\n", boid.currentDirection.x, boid.currentDirection.y, boid.currentDirection.z);
-            printf("targetDirection: %f, %f, %f\n", boid.targetDirection.x, boid.targetDirection.y, boid.targetDirection.z);
-            // Doesn't work right for over 90 deg difference
-            boid.setTargetDirection({1.f, 0.f, -0.4f});
-            float movement_speed = dt * BOID_SPEED;
-            boid.updateDirection(movement_speed, 0.005f);
-        }
-        
-        // Render objects with specified shader
-        terrain.render(shader);
-        boid.render(shader);
 
+        for (int i = 0; i < boids.size(); i++) {
+            //printf("boid Position: %f %f %f\n", boids.at(i).currentPosition.x, boids.at(i).currentPosition.y, boids.at(i).currentPosition.z);
+            if (!paused) {
+                boids.at(i).setTargetDirection({0.f, 0.f, -1.f});
+                float movement_speed = dt * BOID_SPEED;
+                float turn_sharpness = movement_speed * 0.2f;
+                boids.at(i).updateDirection(movement_speed, turn_sharpness);
+            }
+        
+            // Render objects with specified shader
+            boids.at(i).render(shader);
+        }
+
+        terrain.render(shader);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     // Clean-up
     terrain.~Model();
-    boid.~Boid();
+    for (Boid boid : boids) {
+        boid.~Boid();
+    }
     shader.~Shader();
 
     glfwTerminate();

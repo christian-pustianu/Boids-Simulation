@@ -7,6 +7,8 @@
 #include <cassert>
 #include <cstdlib>
 
+#include "other.hpp"
+
 // Vec3f: 3D vector with floats
 struct Vec3f
 {
@@ -104,20 +106,20 @@ Vec3f& operator-=( Vec3f& leftSide, Vec3f rightSide ) noexcept
 }
 
 constexpr
-Vec3f& operator*=( Vec3f& leftSide, float rightSide ) noexcept
+Vec3f& operator*=( Vec3f& leftSide, float scalar ) noexcept
 {
-	leftSide.x *= rightSide;
-	leftSide.y *= rightSide;
-	leftSide.z *= rightSide;
+	leftSide.x *= scalar;
+	leftSide.y *= scalar;
+	leftSide.z *= scalar;
 	return leftSide;
 }
 
 constexpr
-Vec3f& operator/=( Vec3f& leftSide, float rightSide ) noexcept
+Vec3f& operator/=( Vec3f& leftSide, float scalar ) noexcept
 {
-	leftSide.x /= rightSide;
-	leftSide.y /= rightSide;
-	leftSide.z /= rightSide;
+	leftSide.x /= scalar;
+	leftSide.y /= scalar;
+	leftSide.z /= scalar;
 	return leftSide;
 }
 
@@ -155,9 +157,30 @@ Vec3f normalize( Vec3f vector ) noexcept
 	return vector / l;
 }
 
+inline
+Vec3f clamp_vec(Vec3f vector, float min, float max) noexcept
+{
+	return Vec3f{
+		clamp(vector.x, min, max),
+		clamp(vector.y, min, max),
+		clamp(vector.z, min, max)
+	};
+}
+
 // Linear interpolation between two vectors
 inline
 Vec3f lerp(Vec3f vector1, Vec3f vector2, float weight) noexcept
 {
 	return vector1 + weight * (vector2 - vector1);
+}
+
+// Spherical linear interpolation between two vectors
+inline
+Vec3f slerp(Vec3f vector1, Vec3f vector2, float weight) noexcept
+{
+	float V1dotV2 = clamp(dot(vector1, vector2), -1.f, 1.f);
+	//V1dotV2 = clamp(V1dotV2, -1, 1);
+	float theta = std::acos(V1dotV2) * weight;
+	Vec3f RelativeVec = normalize(vector2 - vector1 * V1dotV2);
+	return (vector1 * std::cos(theta)) + (RelativeVec * std::sin(theta));
 }
