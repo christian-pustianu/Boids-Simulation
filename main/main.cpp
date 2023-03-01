@@ -40,6 +40,9 @@ namespace
 
     constexpr float BOID_SPEED = 10.f;
 
+    unsigned int boids_count = 1000;
+    unsigned int boid_camera = 0;
+
     // Pause switch for the simulation
     bool paused = true;
 
@@ -143,7 +146,7 @@ int main()
 
     std::vector<Boid> boids;
     srand((time(NULL)));
-    for (int i = 0; i < 10; i++)
+    for (unsigned int i = 0; i < boids_count; i++)
     {
 		boids.emplace_back(Boid());
 	}
@@ -221,7 +224,9 @@ int main()
         }
         else if (camera.mode == THIRD_PERSON)
         {
-            world2camera = Identity44f;
+            world2camera = look_at(boids.at(boid_camera).currentPosition + Vec3f{0.f, 0.f, 5.f}, 
+                boids.at(boid_camera).currentDirection, 
+                {0.f, 1.f, 0.f});
         }
 
 
@@ -255,16 +260,15 @@ int main()
         // Terrain position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
 
-        for (int i = 0; i < boids.size(); i++) {
-            //printf("boid Position: %f %f %f\n", boids.at(i).currentPosition.x, boids.at(i).currentPosition.y, boids.at(i).currentPosition.z);
+        for (Boid &boid : boids) {
             if (!paused) {
-                boids.at(i).setTargetDirection({0.f, 0.f, -1.f});
+                boid.setTargetDirection({0.f, 0.f, -1.f});
                 float movement_speed = dt * BOID_SPEED;
                 float turn_sharpness = movement_speed * 0.2f;
-                boids.at(i).updateDirection(movement_speed, turn_sharpness);
+                boid.updateDirection(movement_speed, turn_sharpness);
             }
             // Instanced rendering of boid_model for every boid created
-            boid_model.render(boids.at(i).model2world, shader);
+            boid_model.render(boid.model2world, shader);
         }
 
         // Render terrain with specified shader
@@ -275,9 +279,7 @@ int main()
 
     // Clean-up
     terrain.~Model();
-    for (Boid boid : boids) {
-        boid.~Boid();
-    }
+    boid_model.~Model();
     shader.~Shader();
 
     glfwTerminate();
@@ -301,7 +303,7 @@ namespace
             return;
         }
 
-        if (GLFW_KEY_P == key && GLFW_PRESS == action)
+        if (GLFW_KEY_SPACE == key && GLFW_PRESS == action)
         {
             paused = !paused;
         }
@@ -310,7 +312,7 @@ namespace
         {
 
             // Space toggles camera
-            if (GLFW_KEY_SPACE == key && GLFW_PRESS == action)
+            if (GLFW_KEY_C == key && GLFW_PRESS == action)
             {
                 camera->active = !camera->active;
 
@@ -325,10 +327,12 @@ namespace
 				camera->mode = LOCKED_ARC_BALL;
 			else if (GLFW_KEY_2 == key && GLFW_PRESS == action)
 				camera->mode = TOP_DOWN;
-			else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
+            else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
 				camera->mode = FlY_THROUGH;
-			else if (GLFW_KEY_4 == key && GLFW_PRESS == action)
+            else if (GLFW_KEY_4 == key && GLFW_PRESS == action) {
+                boid_camera = rand() % boids_count;
 				camera->mode = THIRD_PERSON;
+            }
 
             // Camera controls if camera is active
             if (camera->active)

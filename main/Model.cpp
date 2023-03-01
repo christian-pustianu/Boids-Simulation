@@ -76,10 +76,10 @@ void Model::render(Mat44f model2world, Shader shader)
     );
 
     // Lights
-    Vec3f lightPosition = { 0.f, 50.f, 0.f };
+    Vec3f lightPosition = { 0.f, 200.f, 0.f };
     Vec3f ambientLight = { 0.05f, 0.05f, 0.05f };
     Vec3f lightColor = { 1.f, 1.f, 1.f };
-    float lightStrength = 10000.f;
+    float lightStrength = 100000.f;
 
     loc = glGetUniformLocation(shader.data.shaderProgram, "light.Position");
     glUniform3f(loc, lightPosition.x, lightPosition.y, lightPosition.z);

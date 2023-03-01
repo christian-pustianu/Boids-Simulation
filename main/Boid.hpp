@@ -1,12 +1,26 @@
 #pragma once
 
+#include "../math/mat44.hpp"
+#include "../math/vec3.hpp"
+
 #include "../math/other.hpp"
+
+constexpr float X_MIN = -100.f;
+constexpr float X_MAX = 100.f;
+constexpr float X_RANGE = X_MAX - X_MIN;
+
+constexpr float Y_MIN = 1.f;
+constexpr float Y_MAX = 50.f;
+constexpr float Y_RANGE = Y_MAX - Y_MIN;
+
+constexpr float Z_MIN = -100.f;
+constexpr float Z_MAX = 100.f;
+constexpr float Z_RANGE = Z_MAX - Z_MIN;
 
 class Boid
 {
 private:
 	Vec3f initialDirection = { 1.f, 0.f, 0.f };
-	Vec3f currentDirection = {};
 	Vec3f targetDirection = {};
 
 	Mat44f rotationMatrix = Identity44f;
@@ -15,9 +29,9 @@ private:
 	// give random position within simulation space
 	void randomizePosition() {
 		// spawn boid at random position within simulation space (x, y, z) = (-100, 2, -100) to (100, 50, 100)
-		this->currentPosition = { (float)rand() / RAND_MAX * 200.f - 100.f, 
-									(float)rand() / RAND_MAX * 48.f + 2.f, 
-									(float)rand() / RAND_MAX * 200.f - 100.f };
+		this->currentPosition = { (float)rand() / RAND_MAX * X_RANGE + X_MIN,
+									(float)rand() / RAND_MAX * Y_RANGE + Y_MIN,
+									(float)rand() / RAND_MAX * Z_RANGE + Z_MIN };
 	}
 
 	// give random direction
@@ -26,6 +40,7 @@ private:
 	}
 
 public:
+	Vec3f currentDirection = {};
 	Vec3f currentPosition = { 0.f, 2.f, 0.f };
 	Mat44f model2world = Identity44f;
 
@@ -47,34 +62,5 @@ public:
 		targetDirection = direction;
 	}
 
-	void updateDirection(float speed, float transition) {
-		// Rotation on custom axis from object's original direction to currentDirection
-		float rotationAngle = acos(dot(this->initialDirection, this->currentDirection));
-		Vec3f rotationAxis = cross(this->initialDirection, this->currentDirection);
-		this->rotationMatrix = make_rotation_custom_axis(normalize(rotationAxis), rotationAngle);
-
-		// Translation using different types of linear interpolation
-
-		// Compute the angle between the vectors
-		float angle = degrees(acos(dot(this->currentDirection, this->targetDirection)));
-
-		// if the angle is greater than 90 degrees, lerp does not work properly,
-		// so we use slerp instead for the first 90 degrees
-		if (angle >= 90.f) {
-			if (angle >= 180.f) {
-				// if the vectors are exactly opposite, slerp doesn't work, but it works if we 
-				// add a very small value to the currentDirection to get it started
-				this->currentDirection = this->currentDirection + Vec3f{ 0.00000001f, 0.f, 0.f };
-			}
-			this->currentDirection = slerp(this->currentDirection, this->targetDirection, transition);
-		}
-		else {
-			this->currentDirection = normalize(lerp(this->currentDirection, this->targetDirection, transition));
-		}
-		this->currentPosition += this->currentDirection * speed;
-		this->translationMatrix = make_translation(currentPosition);
-
-		// Update model2world
-		this->model2world = this->translationMatrix * this->rotationMatrix;
-	}
+	void updateDirection(float, float);
 };
