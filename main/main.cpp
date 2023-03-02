@@ -38,9 +38,10 @@ namespace
     constexpr float SIMULATION_Y = 50.f;
     constexpr float SIMULATION_Z = 100.f;
 
-    constexpr float BOID_SPEED = 10.f;
+    constexpr float BOID_SPEED = 20.f;
+    constexpr float BOID_VISION_RANGE = 12.f;
 
-    unsigned int boids_count = 1000;
+    unsigned int boids_count = 500;
     unsigned int boid_camera = 0;
 
     // Pause switch for the simulation
@@ -52,7 +53,7 @@ namespace
         struct move { bool forward, backwards, left, right, up, down; } move;
 
         Vec2f rotation = { 0.f, 0.f };
-        Vec3f position = { 0.f, 0.f, 50.f };
+        Vec3f position = { 0.f, 0.f, 150.f };
         unsigned int mode = LOCKED_ARC_BALL; // default mode
 
         float yaw = -90.f;
@@ -144,12 +145,13 @@ int main()
     Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
     Model boid_model = Model(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
-    std::vector<Boid> boids;
+    std::vector<Boid*> boids;
     srand((time(NULL)));
     for (unsigned int i = 0; i < boids_count; i++)
     {
-		boids.emplace_back(Boid());
-	}
+		//boids.push_back(&boid);
+	    boids.push_back(new Boid());
+    }
 
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
@@ -224,8 +226,8 @@ int main()
         }
         else if (camera.mode == THIRD_PERSON)
         {
-            world2camera = look_at(boids.at(boid_camera).currentPosition + Vec3f{0.f, 0.f, 5.f}, 
-                boids.at(boid_camera).currentDirection, 
+            world2camera = look_at(boids.at(boid_camera)->currentDirection + Vec3f{0.f, 0.f, -5.f}, 
+                boids.at(boid_camera)->currentPosition,
                 {0.f, 1.f, 0.f});
         }
 
@@ -260,15 +262,28 @@ int main()
         // Terrain position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
 
-        for (Boid &boid : boids) {
+        float movement_speed = dt * BOID_SPEED;
+        float turn_sharpness = movement_speed * 0.2f;
+        Vec3f cohesion = { 0.f, 0.f, 0.f };
+        Vec3f alignment = { 0.f, 0.f, 0.f };
+        Vec3f separation = { 0.f, 0.f, 0.f };
+        Vec3f avoid = { 0.f, 0.f, 0.f };
+
+
+        srand((time(NULL)));
+        for (auto boid : boids) {
             if (!paused) {
-                boid.setTargetDirection({0.f, 0.f, -1.f});
-                float movement_speed = dt * BOID_SPEED;
-                float turn_sharpness = movement_speed * 0.2f;
-                boid.updateDirection(movement_speed, turn_sharpness);
+                std::vector<Boid*> neighbours = boid->findNeighbours(boids, BOID_VISION_RANGE);
+                cohesion = boid->applyCohesion(neighbours, 1.f);
+                alignment = boid->applyAlignment(neighbours, 1.f);
+                separation = boid->applySeparation(neighbours, 3.f, BOID_VISION_RANGE);
+                avoid = boid->avoidEdges(2.f);
+
+                boid->setTargetDirection(normalize(boid->currentDirection + cohesion + alignment + separation) + avoid);
+                boid->updateDirection(movement_speed, turn_sharpness);
             }
             // Instanced rendering of boid_model for every boid created
-            boid_model.render(boid.model2world, shader);
+            boid_model.render(boid->model2world, shader);
         }
 
         // Render terrain with specified shader
@@ -281,6 +296,10 @@ int main()
     terrain.~Model();
     boid_model.~Model();
     shader.~Shader();
+
+    for (auto boid : boids) {
+		delete boid;
+	}
 
     glfwTerminate();
     return 0;

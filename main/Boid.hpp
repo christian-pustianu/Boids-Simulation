@@ -1,8 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "../math/mat44.hpp"
 #include "../math/vec3.hpp"
-
 #include "../math/other.hpp"
 
 constexpr float X_MIN = -100.f;
@@ -16,6 +17,8 @@ constexpr float Y_RANGE = Y_MAX - Y_MIN;
 constexpr float Z_MIN = -100.f;
 constexpr float Z_MAX = 100.f;
 constexpr float Z_RANGE = Z_MAX - Z_MIN;
+
+constexpr float EDGE_LIMIT = 2.f;
 
 class Boid
 {
@@ -63,4 +66,14 @@ public:
 	}
 
 	void updateDirection(float, float);
+
+	std::vector<Boid*> findNeighbours(std::vector<Boid*>, float);
+
+	Vec3f applyCohesion(std::vector<Boid*>, float);
+
+	Vec3f applyAlignment(std::vector<Boid*>, float);
+
+	Vec3f applySeparation(std::vector<Boid*>, float, float);
+
+	Vec3f avoidEdges(float);
 };
