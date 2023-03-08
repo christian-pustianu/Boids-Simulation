@@ -49,7 +49,7 @@ namespace
     constexpr float BOID_SPEED = 40.f;
     constexpr float BOID_VISION_RANGE = 12.f;
 
-    unsigned int boids_count = 200;
+    unsigned int boids_count = 500;
     unsigned int boid_camera = 0;
 
     // Pause switch for the simulation
@@ -82,6 +82,14 @@ namespace
     Vec3f alignment = { 0.f, 0.f, 0.f };
     Vec3f separation = { 0.f, 0.f, 0.f };
     Vec3f avoid = { 0.f, 0.f, 0.f };
+    Vec3f target_location = { 0.f, 0.f, 0.f };
+    Vec3f target_direction = { 0.f, 0.f, 0.f };
+
+    constexpr unsigned int NO_DIRECTION = 0;
+    constexpr unsigned int DIRECTION_GIVEN = 1;
+    constexpr unsigned int POINT_GIVEN = 2;
+
+    unsigned int boid_control = POINT_GIVEN;
 }
 
 
@@ -165,8 +173,8 @@ int main()
     Model sphere = Model(load_wavefront_obj("assets/sphere.obj"));
 
     std::vector<Obstacle*> obstacles;
-    //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 5.f, 0.f}, 3.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 50.f));
+    //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
+    //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 50.f));
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_X, 25.f, SIMULATION_Z }, 10.f));
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_X, 25.f, -SIMULATION_Z }, 10.f));
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_X, 25.f, SIMULATION_Z }, 10.f));
@@ -296,7 +304,17 @@ int main()
                 alignment = boid->applyAlignment(neighbours, 1.f);
                 separation = boid->applySeparation(neighbours, 3.f, BOID_VISION_RANGE);
                 avoid = boid->avoidEdges(2.f) + boid->avoidObstacles(obstacles, 3.f);
-                boid->setTargetDirection(normalize(boid->currentDirection + cohesion + alignment + separation) + avoid);
+
+                if (boid_control == DIRECTION_GIVEN) {
+                    target_direction = { 1.f, 0.f, 0.f};
+                }
+                else if (boid_control == POINT_GIVEN) {
+                    target_location = { 0.f, 10.f, 0.f };
+                    target_direction = normalize(target_direction - boid->currentPosition);
+                }
+
+                boid->setTargetDirection(normalize(boid->currentDirection + 
+                    cohesion + alignment + separation + target_direction) + avoid);
                 boid->updateDirection(movement_speed, turn_sharpness);
             }
             // Instanced rendering of boid_model for every boid created
@@ -305,6 +323,9 @@ int main()
 
         // Render terrain with specified shader
         terrain.render(terrain.model2world, shader);
+
+        // Location point for directed movement
+        sphere.render(make_translation(target_location), shader);
         
         // Enable alpha blending
         glEnable(GL_BLEND);
