@@ -153,6 +153,9 @@ Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept
 inline
 Vec3f normalize( Vec3f vector ) noexcept
 {
+	if( vector.x == 0 && vector.y == 0 && vector.z == 0)
+		return vector;
+
 	auto const l = length( vector );
 	return vector / l;
 }

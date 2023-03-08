@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "Obstacle.hpp"
+
 #include "../math/mat44.hpp"
 #include "../math/vec3.hpp"
 #include "../math/other.hpp"
@@ -18,7 +20,7 @@ constexpr float Z_MIN = -100.f;
 constexpr float Z_MAX = 100.f;
 constexpr float Z_RANGE = Z_MAX - Z_MIN;
 
-constexpr float EDGE_LIMIT = 2.f;
+constexpr float EDGE_LIMIT = 3.f;
 
 class Boid
 {
@@ -76,4 +78,6 @@ public:
 	Vec3f applySeparation(std::vector<Boid*>, float, float);
 
 	Vec3f avoidEdges(float);
+
+	Vec3f avoidObstacles(std::vector<Obstacle*>, float);
 };

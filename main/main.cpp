@@ -9,8 +9,11 @@
 #include "Model.hpp"
 #include "Mesh.hpp"
 #include "Boid.hpp"
+#include "Obstacle.hpp"
+
 #include "cone.hpp"
 #include "loadobj.hpp"
+
 #include "../math/mat44.hpp"
 #include "../math/other.hpp"
 
@@ -33,15 +36,20 @@ namespace
     constexpr unsigned int TOP_DOWN = 2;
     constexpr unsigned int FlY_THROUGH = 3;
     constexpr unsigned int THIRD_PERSON = 4;
+    
+    // Number of obstacles
+    constexpr unsigned int NUM_SPHERES = 3;
+    constexpr unsigned int NUM_BOXES = 3;
+    constexpr unsigned int NUM_COLUMNS = 3;
 
     constexpr float SIMULATION_X = 100.f;
     constexpr float SIMULATION_Y = 50.f;
     constexpr float SIMULATION_Z = 100.f;
 
-    constexpr float BOID_SPEED = 20.f;
+    constexpr float BOID_SPEED = 40.f;
     constexpr float BOID_VISION_RANGE = 12.f;
 
-    unsigned int boids_count = 500;
+    unsigned int boids_count = 200;
     unsigned int boid_camera = 0;
 
     // Pause switch for the simulation
@@ -69,6 +77,11 @@ namespace
     void key_callback(GLFWwindow*, int, int, int, int);
     void cursor_position_callback(GLFWwindow*, double, double);
 
+    // Rules initialization for the boids
+    Vec3f cohesion = { 0.f, 0.f, 0.f };
+    Vec3f alignment = { 0.f, 0.f, 0.f };
+    Vec3f separation = { 0.f, 0.f, 0.f };
+    Vec3f avoid = { 0.f, 0.f, 0.f };
 }
 
 
@@ -142,14 +155,30 @@ int main()
 
     // Define objects
     //Model armadillo = Model(load_wavefront_obj("assets/Armadillo.obj"));
+
     Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
+
+    //Model column = Model(load_wavefront_obj("assets/column.obj"));
+
+    Model box = Model(load_wavefront_obj("assets/box.obj"));
+
+    Model sphere = Model(load_wavefront_obj("assets/sphere.obj"));
+
+    std::vector<Obstacle*> obstacles;
+    //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 5.f, 0.f}, 3.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 50.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_X, 25.f, SIMULATION_Z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_X, 25.f, -SIMULATION_Z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_X, 25.f, SIMULATION_Z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_X, 25.f, -SIMULATION_Z }, 10.f));
+
+
     Model boid_model = Model(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
     for (unsigned int i = 0; i < boids_count; i++)
     {
-		//boids.push_back(&boid);
 	    boids.push_back(new Boid());
     }
 
@@ -176,6 +205,7 @@ int main()
         float dt = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1>>>(now - last).count();
         last = now;
 
+        // CAMERA MOVEMENT
         float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
         if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN)
@@ -240,45 +270,32 @@ int main()
         );
 
         Mat44f world2projection = projection * world2camera;
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         glUniformMatrix4fv(
             0,
             1, GL_TRUE, world2projection.v
         );
 
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         // Camera
         glUniform3f(2, camera.position.x, camera.position.y, camera.position.z);
-
-        // Enable alpha blending
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        
-        // Draw blended objects
-
-        glDisable(GL_BLEND);
 
         // Terrain position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
 
+        // Simulation parameters
         float movement_speed = dt * BOID_SPEED;
         float turn_sharpness = movement_speed * 0.2f;
-        Vec3f cohesion = { 0.f, 0.f, 0.f };
-        Vec3f alignment = { 0.f, 0.f, 0.f };
-        Vec3f separation = { 0.f, 0.f, 0.f };
-        Vec3f avoid = { 0.f, 0.f, 0.f };
 
-
-        srand((time(NULL)));
+        //#pragma omp parallel for
         for (auto boid : boids) {
             if (!paused) {
                 std::vector<Boid*> neighbours = boid->findNeighbours(boids, BOID_VISION_RANGE);
                 cohesion = boid->applyCohesion(neighbours, 1.f);
                 alignment = boid->applyAlignment(neighbours, 1.f);
                 separation = boid->applySeparation(neighbours, 3.f, BOID_VISION_RANGE);
-                avoid = boid->avoidEdges(2.f);
-
+                avoid = boid->avoidEdges(2.f) + boid->avoidObstacles(obstacles, 3.f);
                 boid->setTargetDirection(normalize(boid->currentDirection + cohesion + alignment + separation) + avoid);
                 boid->updateDirection(movement_speed, turn_sharpness);
             }
@@ -288,6 +305,20 @@ int main()
 
         // Render terrain with specified shader
         terrain.render(terrain.model2world, shader);
+        
+        // Enable alpha blending
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Draw blended objects
+
+        // Render obstacles
+        for (auto obstacle : obstacles) {
+            obstacle->model->render(obstacle->model2world, shader);
+		}
+
+        glDisable(GL_BLEND);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -299,6 +330,10 @@ int main()
 
     for (auto boid : boids) {
 		delete boid;
+	}
+
+    for (auto obstacle : obstacles) {
+		delete obstacle;
 	}
 
     glfwTerminate();
