@@ -1,6 +1,10 @@
 #include <glad.h>
 #include <GLFW/glfw3.h>
 
+#include "../third_party/imGUI/imgui.h"
+#include "../third_party/imGUI/imgui_impl_glfw.h"
+#include "../third_party/imGUI/imgui_impl_opengl3.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <chrono>
@@ -190,6 +194,14 @@ int main()
 	    boids.push_back(new Boid());
     }
 
+    //ImGUI setup
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 430");
+
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
     {
@@ -264,9 +276,9 @@ int main()
         }
         else if (camera.mode == THIRD_PERSON)
         {
-            world2camera = look_at(boids.at(boid_camera)->currentDirection + Vec3f{0.f, 0.f, -5.f}, 
-                boids.at(boid_camera)->currentPosition,
-                {0.f, 1.f, 0.f});
+            //world2camera = look_at(boids.at(boid_camera)->currentDirection + Vec3f{0.f, 0.f, -5.f}, 
+            //    boids.at(boid_camera)->currentPosition,
+            //    {0.f, 1.f, 0.f});
         }
 
 
@@ -278,16 +290,20 @@ int main()
         );
 
         Mat44f world2projection = projection * world2camera;
-        glUniformMatrix4fv(
-            0,
-            1, GL_TRUE, world2projection.v
-        );
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Render GUI
+        {
+            ImGui::Begin("Simulation");
+            ImGui::Text("Hello");
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Camera
-        glUniform3f(2, camera.position.x, camera.position.y, camera.position.z);
 
         // Terrain position in world
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
@@ -318,14 +334,14 @@ int main()
                 boid->updateDirection(movement_speed, turn_sharpness);
             }
             // Instanced rendering of boid_model for every boid created
-            boid_model.render(boid->model2world, shader);
+            boid_model.render(camera.position, world2projection, boid->model2world, shader);
         }
 
         // Render terrain with specified shader
-        terrain.render(terrain.model2world, shader);
+        terrain.render(camera.position, world2projection, terrain.model2world, shader);
 
         // Location point for directed movement
-        sphere.render(make_translation(target_location), shader);
+        sphere.render(camera.position, world2projection, make_translation(target_location), shader);
         
         // Enable alpha blending
         glEnable(GL_BLEND);
@@ -335,18 +351,36 @@ int main()
 
         // Render obstacles
         for (auto obstacle : obstacles) {
-            obstacle->model->render(obstacle->model2world, shader);
+            obstacle->model->render(camera.position, world2projection, obstacle->model2world, shader);
 		}
 
-        glDisable(GL_BLEND);
+        glDisable(GL_BLEND); 
+
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
+        GLenum gl_error = glGetError();
+        if (gl_error != GL_NO_ERROR) {
+            printf("OpenGL error: %d\n", gl_error);
+        }
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // Clean-up
+    // End ImGui processes
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     terrain.~Model();
     boid_model.~Model();
+    sphere.~Model();
     shader.~Shader();
 
     for (auto boid : boids) {
@@ -357,6 +391,7 @@ int main()
 		delete obstacle;
 	}
 
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }

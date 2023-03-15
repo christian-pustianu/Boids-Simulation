@@ -18,10 +18,6 @@ workspace "Boids-Simulation"
 	filter "toolset:gcc or toolset:clang"
 		linkoptions { "-pthread" }
 		buildoptions { "-march=native", "-Wall", "-pthread" }
-
-		-- Varriable-length arrays (VLAs) are an extension that GCC and clang
-		-- have long supported. However, they are not part of the C++ standard.
-		-- (MSVC will not compile code with VLAs.)
 		buildoptions { "-Werror=vla" }
 
 	filter "toolset:msc-*"
@@ -87,7 +83,7 @@ project "main"
 	links "x-stb"
 	links "x-glad"
 	links "x-glfw"
-	-- links "x-imgui"
+	links "x-imgui"
 
 	files( sources )
 

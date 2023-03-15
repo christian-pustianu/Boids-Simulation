@@ -96,12 +96,12 @@ project( "x-rapidobj" )
 
 	files( "rapidobj/include/**.h*" )
 
--- project( "x-imgui" )
--- 	kind "StaticLib"
+project( "x-imgui" )
+	kind "StaticLib"
 
--- 	location "."
+	location "."
 
--- 	files( "imGUI/**.h*" )
--- 	files( "imGUI/**.cpp*" )
+	files( "imGUI/**.h*" )
+	files( "imGUI/**.cpp*" )
 
 --EOF

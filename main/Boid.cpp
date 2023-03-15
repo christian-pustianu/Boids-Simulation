@@ -147,10 +147,8 @@ Vec3f Boid::avoidEdges(float strength) {
 Vec3f Boid::avoidObstacles(std::vector<Obstacle*> obstacles, float strength) {
 	Vec3f direction = Vec3f{ 0.f, 0.f, 0.f };
 	for (auto o : obstacles) {
-		printf("Obstacle position: %f %f %f\n", this->currentPosition.x, this->currentPosition.y, this->currentPosition.z);
 		if (o->isColliding(this->currentPosition)) {
 			direction += this->currentPosition - o->position;
-			printf("Box COLLISION\n");
 		}
 	}
 	return normalize(direction) * strength;

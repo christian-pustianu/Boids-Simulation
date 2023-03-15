@@ -41,16 +41,22 @@ RenderData Model::setupRendering(Mesh const& mesh)
     }
 
     // Reset state
+    glEnableVertexAttribArray(0);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     return data;
 }
 
-void Model::render(Mat44f model2world, Shader shader)
+void Model::render(Vec3f cameraPosition, Mat44f world2projection, Mat44f model2world, Shader shader)
 {
     glUseProgram(shader.data.shaderProgram);
     
+    glUniformMatrix4fv(
+        0,
+        1, GL_TRUE, world2projection.v
+    );
+
     // material properties
     GLuint loc = glGetUniformLocation(shader.data.shaderProgram, "material.Ambient");
     glUniform3f(loc, mat.ambient.x, mat.ambient.y, mat.ambient.z);
@@ -75,6 +81,8 @@ void Model::render(Mat44f model2world, Shader shader)
         1, GL_TRUE, model2world.v
     );
 
+    glUniform3f(2, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
     // Lights
     Vec3f lightPosition = { 0.f, 200.f, 0.f };
     Vec3f ambientLight = { 0.05f, 0.05f, 0.05f };
@@ -95,4 +103,9 @@ void Model::render(Mat44f model2world, Shader shader)
 
     glBindVertexArray(this->data.VAO);
     glDrawArrays(GL_TRIANGLES, 0, this->vertexCount);
+
+    // Reset state
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
