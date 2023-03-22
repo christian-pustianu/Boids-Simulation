@@ -29,7 +29,7 @@ extern "C"
 
 namespace
 {
-    // Global variables
+    // Global constant variables
     const unsigned int WINDOW_WIDTH = 1280;
     const unsigned int WINDOW_HEIGHT = 720;
 
@@ -40,21 +40,28 @@ namespace
     constexpr unsigned int TOP_DOWN = 2;
     constexpr unsigned int FlY_THROUGH = 3;
     constexpr unsigned int THIRD_PERSON = 4;
-    
-    // Number of obstacles
-    constexpr unsigned int NUM_SPHERES = 3;
-    constexpr unsigned int NUM_BOXES = 3;
-    constexpr unsigned int NUM_COLUMNS = 3;
 
-    constexpr float SIMULATION_X = 100.f;
-    constexpr float SIMULATION_Y = 50.f;
-    constexpr float SIMULATION_Z = 100.f;
+    constexpr Vec3f SIMULATION_SIZE = { 100.f, 50.f, 100.f };
 
-    constexpr float BOID_SPEED = 40.f;
-    constexpr float BOID_VISION_RANGE = 12.f;
+    constexpr unsigned int NO_DIRECTION = 0;
+    constexpr unsigned int DIRECTION_GIVEN = 1;
+    constexpr unsigned int POINT_GIVEN = 2;
 
-    unsigned int boids_count = 500;
+    // Global variables changeable in the GUI
+    unsigned int boid_control = NO_DIRECTION;
+
+    float BOID_SPEED = 40.f;
+    float BOID_VISION_RANGE = 12.f;
+
+    int boids_count = 100;
+
+    float cohesion_strength = 1.f;
+    float alignment_strength = 1.f;
+    float separation_strength = 3.f;
+
     unsigned int boid_camera = 0;
+
+    bool fish_model = true;
 
     // Pause switch for the simulation
     bool paused = true;
@@ -81,19 +88,7 @@ namespace
     void key_callback(GLFWwindow*, int, int, int, int);
     void cursor_position_callback(GLFWwindow*, double, double);
 
-    // Rules initialization for the boids
-    Vec3f cohesion = { 0.f, 0.f, 0.f };
-    Vec3f alignment = { 0.f, 0.f, 0.f };
-    Vec3f separation = { 0.f, 0.f, 0.f };
-    Vec3f avoid = { 0.f, 0.f, 0.f };
-    Vec3f target_location = { 0.f, 0.f, 0.f };
-    Vec3f target_direction = { 0.f, 0.f, 0.f };
 
-    constexpr unsigned int NO_DIRECTION = 0;
-    constexpr unsigned int DIRECTION_GIVEN = 1;
-    constexpr unsigned int POINT_GIVEN = 2;
-
-    unsigned int boid_control = POINT_GIVEN;
 }
 
 
@@ -178,14 +173,16 @@ int main()
 
     std::vector<Obstacle*> obstacles;
     //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
-    //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 50.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_X, 25.f, SIMULATION_Z }, 10.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_X, 25.f, -SIMULATION_Z }, 10.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_X, 25.f, SIMULATION_Z }, 10.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_X, 25.f, -SIMULATION_Z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 50.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_SIZE.x, 25.f, SIMULATION_SIZE.z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, SIMULATION_SIZE.z }, 10.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
 
 
-    Model boid_model = Model(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    Model fish = Model(load_wavefront_obj("assets/fish.obj"));
+    //boid_model.model2world = make_rotation_y(PI / 2.f) * make_scaling(0.5f, 0.5f, 0.5f);
+    Model cone = Model(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
@@ -202,11 +199,31 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 430");
 
+    // Rules initialization for the boids
+    Vec3f cohesion = { 0.f, 0.f, 0.f };
+    Vec3f alignment = { 0.f, 0.f, 0.f };
+    Vec3f separation = { 0.f, 0.f, 0.f };
+    Vec3f avoid = { 0.f, 0.f, 0.f };
+    Vec3f target_location = { 0.f, 0.f, 0.f };
+    static float target_location_a[] = { 0.f, 0.f, 0.f };
+    Vec3f target_direction = { 0.f, 0.f, 0.f };
+
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
-        
+
+        // Update number of boids if changed by the GUI
+        while (boids_count > boids.size())
+        {
+            boids.push_back(new Boid());
+        }
+
+        while (boids_count < boids.size())
+        {
+            boids.pop_back();
+        }
+
         // Set viewport to current window size
         int nwidth, nheight;
         glfwGetFramebufferSize(window, &nwidth, &nheight);
@@ -215,7 +232,7 @@ int main()
         while (0 == nwidth || 0 == nheight)
         {
             glfwWaitEvents();
-			glfwGetFramebufferSize(window, &nwidth, &nheight);
+            glfwGetFramebufferSize(window, &nwidth, &nheight);
         }
 
         glViewport(0, 0, nwidth, nheight);
@@ -249,9 +266,9 @@ int main()
             else if (camera.move.right)
                 camera.position += normalize(cross(camera.front, camera.up)) * measurmentUnit;
             else if (camera.move.up)
-				camera.position += camera.up * measurmentUnit;
-			else if (camera.move.down)
-				camera.position -= camera.up * measurmentUnit;
+                camera.position += camera.up * measurmentUnit;
+            else if (camera.move.down)
+                camera.position -= camera.up * measurmentUnit;
         }
 
         // world2camera matrix for different camera modes
@@ -266,7 +283,7 @@ int main()
         else if (camera.mode == FlY_THROUGH)
         {
             world2camera = look_at(camera.position, camera.front, camera.up);
-		}
+        }
         else if (camera.mode == TOP_DOWN)
         {
             Mat44f Rx = make_rotation_x(radians(90.f));
@@ -291,22 +308,59 @@ int main()
 
         Mat44f world2projection = projection * world2camera;
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // Render GUI
+        // ImGui setup for the GUI
         {
-            ImGui::Begin("Simulation");
-            ImGui::Text("Hello");
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            // Disable mouse cursor when moving the camera
+            if(camera.active)
+	            ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+
+            // Render GUI
+            ImGui::Begin("Simulation Parameters");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::Checkbox("Pause (SPACE)", &paused);
+            ImGui::SliderInt("Boid Count", &boids_count, 0, 10000);
+            ImGui::SliderFloat("Boid Speed", &BOID_SPEED, 0.f, 100.f);
+            ImGui::SliderFloat("Boid Vision Range", &BOID_VISION_RANGE, 0.f, 15.f);
+            ImGui::Checkbox("Fish model", &fish_model);
+            ImGui::Text("Rules:");
+            ImGui::SliderFloat("Cohesion", &cohesion_strength, 0.f, 5.f);
+            ImGui::SliderFloat("Alignment", &alignment_strength, 0.f, 5.f);
+            ImGui::SliderFloat("Separation", &separation_strength, 0.f, 5.f);
+            if (ImGui::Button("Default")) {
+                BOID_SPEED = 40.f;
+                BOID_VISION_RANGE = 12.f;
+                boids_count = 500;
+                cohesion_strength = 1.f;
+                alignment_strength = 1.f;
+                separation_strength = 3.f;
+            }
+            if(ImGui::Button("No direction")) { boid_control = NO_DIRECTION; target_direction = { 0.f, 0.f, 0.f }; }
+            ImGui::SameLine();
+            if (ImGui::Button("Go in direction")) { boid_control = DIRECTION_GIVEN; target_direction = { 1.f, 0.f, 0.f }; }
+            ImGui::SameLine();
+            if (ImGui::Button("Go to point")) boid_control = POINT_GIVEN;
+            if (boid_control == POINT_GIVEN) {
+                ImGui::SliderFloat("Point X", &target_location.x, -SIMULATION_SIZE.x, SIMULATION_SIZE.x);
+                ImGui::SliderFloat("Point Y", &target_location.y, 0.f, SIMULATION_SIZE.y);
+                ImGui::SliderFloat("Point Z", &target_location.z, -SIMULATION_SIZE.z, SIMULATION_SIZE.z);
+            }
+            else if (boid_control == DIRECTION_GIVEN) {
+                ImGui::SliderFloat("Direction X", &target_direction.x, -1.f, 1.f );
+                ImGui::SliderFloat("Direction Y", &target_direction.y, -1.f, 1.f );
+                ImGui::SliderFloat("Direction Z", &target_direction.z, -1.f, 1.f );
+            }
+
             ImGui::End();
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Terrain position in world
-        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_X, 0.f, SIMULATION_Z);
+        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, 0.f, SIMULATION_SIZE.z);
 
         // Simulation parameters
         float movement_speed = dt * BOID_SPEED;
@@ -316,17 +370,13 @@ int main()
         for (auto boid : boids) {
             if (!paused) {
                 std::vector<Boid*> neighbours = boid->findNeighbours(boids, BOID_VISION_RANGE);
-                cohesion = boid->applyCohesion(neighbours, 1.f);
-                alignment = boid->applyAlignment(neighbours, 1.f);
-                separation = boid->applySeparation(neighbours, 3.f, BOID_VISION_RANGE);
+                cohesion = boid->applyCohesion(neighbours, cohesion_strength);
+                alignment = boid->applyAlignment(neighbours, alignment_strength);
+                separation = boid->applySeparation(neighbours, separation_strength, BOID_VISION_RANGE);
                 avoid = boid->avoidEdges(2.f) + boid->avoidObstacles(obstacles, 3.f);
 
-                if (boid_control == DIRECTION_GIVEN) {
-                    target_direction = { 1.f, 0.f, 0.f};
-                }
-                else if (boid_control == POINT_GIVEN) {
-                    target_location = { 0.f, 10.f, 0.f };
-                    target_direction = normalize(target_direction - boid->currentPosition);
+                if (boid_control == POINT_GIVEN) {
+                    target_direction = normalize(target_location - boid->currentPosition);
                 }
 
                 boid->setTargetDirection(normalize(boid->currentDirection + 
@@ -334,14 +384,18 @@ int main()
                 boid->updateDirection(movement_speed, turn_sharpness);
             }
             // Instanced rendering of boid_model for every boid created
-            boid_model.render(camera.position, world2projection, boid->model2world, shader);
+            if(fish_model)
+                fish.render(camera.position, world2projection, boid->model2world, shader);
+            else
+                cone.render(camera.position, world2projection, boid->model2world, shader);
         }
 
         // Render terrain with specified shader
         terrain.render(camera.position, world2projection, terrain.model2world, shader);
 
+        if(boid_control == POINT_GIVEN)
         // Location point for directed movement
-        sphere.render(camera.position, world2projection, make_translation(target_location), shader);
+            sphere.render(camera.position, world2projection, make_translation(target_location), shader);
         
         // Enable alpha blending
         glEnable(GL_BLEND);
@@ -379,7 +433,8 @@ int main()
     ImGui::DestroyContext();
 
     terrain.~Model();
-    boid_model.~Model();
+    cone.~Model();
+    fish.~Model();
     sphere.~Model();
     shader.~Shader();
 

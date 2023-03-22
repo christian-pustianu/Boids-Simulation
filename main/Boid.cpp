@@ -58,9 +58,13 @@ std::vector<Boid*> Boid::findNeighbours(std::vector<Boid*> totalBoids, float rad
 	std::vector<Boid*> neighbours;
 	float distance;
 	for (auto b : totalBoids) {
-		distance = length(b->currentPosition - this->currentPosition);
+		Vec3f diff = b->currentPosition - this->currentPosition;
+		distance = length(diff);
 		if (distance > 0 && distance < radius) {
-			neighbours.push_back(b);
+			//float angle = acos(dot(this->currentDirection, diff));
+			//if (angle < 150.f) {
+				neighbours.push_back(b);
+			//}
 		}
 	}
 	return neighbours;

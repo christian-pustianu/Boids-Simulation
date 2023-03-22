@@ -44,5 +44,5 @@ public:
 	};
 	
 	RenderData setupRendering(Mesh const&);
-	void render(Vec3f, Mat44f, Mat44f, Shader);
+	void render(Vec3f, Mat44f, Mat44f, Shader&);
 };

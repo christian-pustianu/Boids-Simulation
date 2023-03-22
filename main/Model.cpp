@@ -48,7 +48,7 @@ RenderData Model::setupRendering(Mesh const& mesh)
     return data;
 }
 
-void Model::render(Vec3f cameraPosition, Mat44f world2projection, Mat44f model2world, Shader shader)
+void Model::render(Vec3f cameraPosition, Mat44f world2projection, Mat44f model2world, Shader& shader)
 {
     glUseProgram(shader.data.shaderProgram);
     
