@@ -167,6 +167,33 @@ Mat44f make_rotation_z(float aAngle) noexcept
 }
 
 inline
+Mat44f make_shear_x(float aShY, float aShZ) noexcept
+{
+	return Mat44f{ 1.f, 0.f, 0.f, 0.f,
+				   aShY, 1.f, 0.f, 0.f,
+				   aShZ, 0.f, 1.f, 0.f,
+				   0.f, 0.f, 0.f, 1.f };
+}
+
+inline
+Mat44f make_shear_y(float aShX, float aShZ) noexcept
+{
+	return Mat44f{ 1.f, aShX, 0.f, 0.f,
+				   0.f, 1.f, 0.f, 0.f,
+				   0.f, aShZ, 1.f, 0.f,
+				   0.f, 0.f, 0.f, 1.f };
+}
+
+inline
+Mat44f make_shear_z(float aShX, float aShY) noexcept
+{
+	return Mat44f{ 1.f, 0.f, aShX, 0.f,
+				   0.f, 1.f, aShY, 0.f,
+				   0.f, 0.f, 1.f, 0.f,
+				   0.f, 0.f, 0.f, 1.f };
+}
+
+inline
 Mat44f make_translation(Vec3f aTranslation) noexcept
 {
 	return Mat44f{ 1.f, 0.f, 0.f, aTranslation.x,

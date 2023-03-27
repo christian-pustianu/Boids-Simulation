@@ -21,6 +21,8 @@
 #include "../math/mat44.hpp"
 #include "../math/other.hpp"
 
+#include <omp.h>
+
 extern "C"
 {
     // Force the use of the NVIDIA GPU on laptops with switchable graphics
@@ -47,11 +49,14 @@ namespace
     constexpr unsigned int DIRECTION_GIVEN = 1;
     constexpr unsigned int POINT_GIVEN = 2;
 
+    float tailAngle = 0.f;
+    float tailSpeed = 0.05f;
+
     // Global variables changeable in the GUI
     unsigned int boid_control = NO_DIRECTION;
 
-    float BOID_SPEED = 40.f;
-    float BOID_VISION_RANGE = 12.f;
+    float boid_speed = 40.f;
+    float boid_vision_range = 12.f;
 
     int boids_count = 100;
 
@@ -62,6 +67,7 @@ namespace
     unsigned int boid_camera = 0;
 
     bool fish_model = true;
+    bool right_click = false;
 
     // Pause switch for the simulation
     bool paused = true;
@@ -88,7 +94,8 @@ namespace
     void key_callback(GLFWwindow*, int, int, int, int);
     void cursor_position_callback(GLFWwindow*, double, double);
 
-
+    Vec3f target_location = { 0.f, 0.f, 0.f };
+    Vec3f target_direction = { 0.f, 0.f, 0.f };
 }
 
 
@@ -158,18 +165,18 @@ int main()
     auto last = std::chrono::steady_clock::now();
     
     // Set up shaders
-    Shader shader = Shader("assets/BlinnPhong.vert", "assets/BlinnPhong.frag");
+    Shader shader = Shader("assets/shaders/BlinnPhong.vert", "assets/shaders/BlinnPhong.frag");
 
     // Define objects
-    //Model armadillo = Model(load_wavefront_obj("assets/Armadillo.obj"));
+    //Model armadillo = Model(load_wavefront_obj("assets/models/Armadillo.obj"));
 
-    Model terrain = Model(load_wavefront_obj("assets/terrain.obj"));
+    Model terrain = Model(load_wavefront_obj("assets/models/terrain.obj"));
 
-    //Model column = Model(load_wavefront_obj("assets/column.obj"));
+    //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
-    Model box = Model(load_wavefront_obj("assets/box.obj"));
+    Model box = Model(load_wavefront_obj("assets/models/box.obj"));
 
-    Model sphere = Model(load_wavefront_obj("assets/sphere.obj"));
+    Model sphere = Model(load_wavefront_obj("assets/models/sphere.obj"));
 
     std::vector<Obstacle*> obstacles;
     //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
@@ -180,9 +187,8 @@ int main()
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
 
 
-    Model fish = Model(load_wavefront_obj("assets/fish.obj"));
-    //boid_model.model2world = make_rotation_y(PI / 2.f) * make_scaling(0.5f, 0.5f, 0.5f);
-    Model cone = Model(make_cone(true, 16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    Model fish = Model(load_wavefront_obj("assets/models/fish.obj"));
+    Model cone = Model(make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
@@ -204,9 +210,6 @@ int main()
     Vec3f alignment = { 0.f, 0.f, 0.f };
     Vec3f separation = { 0.f, 0.f, 0.f };
     Vec3f avoid = { 0.f, 0.f, 0.f };
-    Vec3f target_location = { 0.f, 0.f, 0.f };
-    static float target_location_a[] = { 0.f, 0.f, 0.f };
-    Vec3f target_direction = { 0.f, 0.f, 0.f };
 
     // Start the rendering loop
     while (!glfwWindowShouldClose(window))
@@ -323,16 +326,16 @@ int main()
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::Checkbox("Pause (SPACE)", &paused);
             ImGui::SliderInt("Boid Count", &boids_count, 0, 10000);
-            ImGui::SliderFloat("Boid Speed", &BOID_SPEED, 0.f, 100.f);
-            ImGui::SliderFloat("Boid Vision Range", &BOID_VISION_RANGE, 0.f, 15.f);
+            ImGui::SliderFloat("Boid Speed", &boid_speed, 0.f, 100.f);
+            ImGui::SliderFloat("Boid Vision Range", &boid_vision_range, 0.f, 15.f);
             ImGui::Checkbox("Fish model", &fish_model);
             ImGui::Text("Rules:");
             ImGui::SliderFloat("Cohesion", &cohesion_strength, 0.f, 5.f);
             ImGui::SliderFloat("Alignment", &alignment_strength, 0.f, 5.f);
             ImGui::SliderFloat("Separation", &separation_strength, 0.f, 5.f);
             if (ImGui::Button("Default")) {
-                BOID_SPEED = 40.f;
-                BOID_VISION_RANGE = 12.f;
+                boid_speed = 40.f;
+                boid_vision_range = 12.f;
                 boids_count = 500;
                 cohesion_strength = 1.f;
                 alignment_strength = 1.f;
@@ -363,29 +366,38 @@ int main()
         terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, 0.f, SIMULATION_SIZE.z);
 
         // Simulation parameters
-        float movement_speed = dt * BOID_SPEED;
+        float movement_speed = dt * boid_speed;
         float turn_sharpness = movement_speed * 0.2f;
 
-        //#pragma omp parallel for
+
+            //for private(cohesion, alignment, separation, avoid)
+        //#pragma omp parallel for private(cohesion, alignment, separation, avoid)
         for (auto boid : boids) {
             if (!paused) {
-                std::vector<Boid*> neighbours = boid->findNeighbours(boids, BOID_VISION_RANGE);
+                int threadNum = omp_get_thread_num();
+                int maxThreads = omp_get_max_threads();
+                printf(" Hello from thread %i of %i!\n", threadNum, maxThreads);
+                std::vector<Boid*> neighbours = boid->findNeighbours(boids, boid_vision_range);
                 cohesion = boid->applyCohesion(neighbours, cohesion_strength);
                 alignment = boid->applyAlignment(neighbours, alignment_strength);
-                separation = boid->applySeparation(neighbours, separation_strength, BOID_VISION_RANGE);
+                separation = boid->applySeparation(neighbours, separation_strength, boid_vision_range);
                 avoid = boid->avoidEdges(2.f) + boid->avoidObstacles(obstacles, 3.f);
 
                 if (boid_control == POINT_GIVEN) {
                     target_direction = normalize(target_location - boid->currentPosition);
                 }
 
-                boid->setTargetDirection(normalize(boid->currentDirection + 
+                boid->setTargetDirection(normalize(boid->currentDirection +
                     cohesion + alignment + separation + target_direction) + avoid);
                 boid->updateDirection(movement_speed, turn_sharpness);
             }
             // Instanced rendering of boid_model for every boid created
-            if(fish_model)
-                fish.render(camera.position, world2projection, boid->model2world, shader);
+            if (fish_model) {
+                Mat44f animation = make_shear_x(0.f, tailAngle);
+                fish.render(camera.position, world2projection, boid->model2world*animation, shader);
+                tailAngle += dt * tailSpeed;
+                if (tailAngle > 0.2f || tailAngle < -0.2f) tailSpeed = -tailSpeed;
+            }
             else
                 cone.render(camera.position, world2projection, boid->model2world, shader);
         }
@@ -460,7 +472,7 @@ namespace
         std::fprintf(stderr, "GLFW error: %s (%d)\n", description, code);
     }
 
-    void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    void key_callback(GLFWwindow* window, int key, int, int action, int mods)
     {
         if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action)
         {
@@ -471,6 +483,14 @@ namespace
         if (GLFW_KEY_SPACE == key && GLFW_PRESS == action)
         {
             paused = !paused;
+        }
+
+        if (GLFW_MOUSE_BUTTON_RIGHT == key)
+        {
+            if (GLFW_PRESS == action)
+                right_click = true;
+            else if (GLFW_RELEASE == action)
+                right_click = false;
         }
 
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window)))
@@ -592,6 +612,20 @@ namespace
                     front.y = sinf(radians(camera->pitch));
                     front.z = sinf(radians(camera->yaw)) * cosf(radians(camera->pitch));
                     camera->front = normalize(front);
+                }
+            }
+            else
+            {
+                // if right click is pressed, change target_location on XZ plane
+                if (right_click)
+                {
+                    printf("Hello\n");
+                    int nwidth, nheight;
+					glfwGetFramebufferSize(window, &nwidth, &nheight);
+					float x = float(xPos) / float(nwidth);
+					float y = float(yPos) / float(nheight);
+					target_location.x = x * 2.f - 1.f;
+					target_location.z = y * 2.f - 1.f;
                 }
             }
         }

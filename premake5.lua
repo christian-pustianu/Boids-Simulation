@@ -3,7 +3,7 @@ workspace "Boids-Simulation"
 	cppdialect "C++17"
 
 	platforms { "x64" }
-	configurations { "debug", "release" }
+	configurations { "debug", "release" } buildoptions { "/openmp" }
 
 	flags "NoPCH"
 	flags "MultiProcessorCompile"
@@ -89,12 +89,12 @@ project "main"
 
 project "main-shaders"
 	local shaders = { 
-		"assets/*.vert",
-		"assets/*.frag",
-		"assets/*.geom",
-		"assets/*.tesc",
-		"assets/*.tese",
-		"assets/*.comp"
+		"assets/shaders/*.vert",
+		"assets/shaders/*.frag",
+		"assets/shaders/*.geom",
+		"assets/shaders/*.tesc",
+		"assets/shaders/*.tese",
+		"assets/shaders/*.comp"
 	}
 
 	kind "Utility"
