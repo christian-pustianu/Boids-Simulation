@@ -36,29 +36,29 @@ Mesh load_wavefront_obj( char const* aPath )
 				result.attributes.normals[idx.normal_index * 3 + 1],
 				result.attributes.normals[idx.normal_index * 3 + 2]
 			}, Vec2f{} });
-
-			// Always triangles, so we can find the face index by dividing the vertex index by three
-			auto const& mat = result.materials[shape.mesh.material_ids[i / 3]];
-
-			if (!mat.ambient.empty())
-				material.ambient = Vec3f{ mat.ambient[0], mat.ambient[1], mat.ambient[2] };
-
-			if (!mat.diffuse.empty())
-				material.diffuse = Vec3f{ mat.diffuse[0], mat.diffuse[1], mat.diffuse[2] };
-
-			if (!mat.specular.empty())
-				material.specular = Vec3f{ mat.specular[0], mat.specular[1], mat.specular[2] };
-			
-			if (!mat.emission.empty())
-				material.emission = Vec3f{ mat.emission[0], mat.emission[1], mat.emission[2] };
-			
-			if (mat.shininess)
-				material.shininess = mat.shininess;
-
-			if (mat.dissolve)
-				material.alpha = mat.dissolve;
-						
 		}
+
+		// Find the face index
+		auto const& mat = result.materials[shape.mesh.material_ids[0]];
+
+		if (!mat.ambient.empty())
+			material.ambient = Vec3f{ mat.ambient[0], mat.ambient[1], mat.ambient[2] };
+
+		if (!mat.diffuse.empty())
+			material.diffuse = Vec3f{ mat.diffuse[0], mat.diffuse[1], mat.diffuse[2] };
+
+		if (!mat.specular.empty())
+			material.specular = Vec3f{ mat.specular[0], mat.specular[1], mat.specular[2] };
+			
+		if (!mat.emission.empty())
+			material.emission = Vec3f{ mat.emission[0], mat.emission[1], mat.emission[2] };
+			
+		if (mat.shininess)
+			material.shininess = mat.shininess;
+
+		if (mat.dissolve)
+			material.alpha = mat.dissolve;
+						
 	}
 	return Mesh(vertices, material);
 }
