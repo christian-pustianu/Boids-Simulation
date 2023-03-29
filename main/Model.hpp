@@ -27,27 +27,18 @@ private:
 public:
 	RenderData data;
 	std::vector<Material> materials;
-	std::vector<int> materialIndexes;
 	std::size_t vertexCount;
 
 	Mat44f model2world = Identity44f;
 
-	//Model(Mesh& mesh) {
-	//	if (SimpleMesh* sm = dynamic_cast<SimpleMesh*>(&mesh)) {
-
-	//	}
-	//}
-
 	Model(SimpleMesh mesh) {
-		data = setupRendering(mesh);
+		data = setupRendering_for_SMesh(mesh);
 		vertexCount = mesh.vertices.size();
 		materials.push_back(mesh.material);
-		materialIndexes = std::vector<int>(vertexCount, 0);
 	};
 
 	Model(MultiMaterialMesh mesh) {
-		materialIndexes = mesh.materialIndexes;
-		data = setupRendering(mesh);
+		data = setupRendering_for_MMMesh(mesh);
 		vertexCount = mesh.vertices.size();
 		materials = mesh.materials;
 	};
@@ -63,6 +54,9 @@ public:
 		cleanup();
 	};
 	
-	RenderData setupRendering(Mesh const&);
-	void render(Vec3f, Mat44f, Mat44f, Shader&);
+	RenderData setupRendering_for_SMesh(SimpleMesh const& mesh);
+	RenderData setupRendering_for_MMMesh(MultiMaterialMesh const& mesh);
+	//RenderData setupRendering(Mesh const&);
+	void renderMMMesh(Vec3f, Mat44f, Mat44f, Shader&);
+	void renderSMesh(Vec3f, Mat44f, Mat44f, Shader&);
 };

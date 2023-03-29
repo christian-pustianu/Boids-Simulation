@@ -1,6 +1,6 @@
 #include "cone.hpp"
 
-Mesh make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
+SimpleMesh make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
 {
 	std::vector<Vertex> vertices;
 
@@ -41,7 +41,7 @@ Mesh make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
 
 	Material material;
 	material.ambient = color;
-	Mesh mesh(vertices);
+	SimpleMesh mesh(vertices, material);
 	return mesh;
 }
 

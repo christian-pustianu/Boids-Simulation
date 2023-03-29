@@ -20,4 +20,4 @@
 * 
 * @return The cone's mesh object.
 */
-Mesh make_cone(std::size_t subdivs = 16, Vec3f color = { 1.f, 1.f, 1.f }, Mat44f transformMatrix = Identity44f);
+SimpleMesh make_cone(std::size_t subdivs = 16, Vec3f color = { 1.f, 1.f, 1.f }, Mat44f transformMatrix = Identity44f);

@@ -165,7 +165,8 @@ int main()
     auto last = std::chrono::steady_clock::now();
     
     // Set up shaders
-    Shader shader = Shader("assets/shaders/BlinnPhong.vert", "assets/shaders/BlinnPhong.frag");
+    Shader SimpleShader = Shader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
+    Shader MMshader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
 
     // Define objects
     Model terrain = Model(load_wavefront_obj_to_simplemesh("assets/models/terrain.obj"));
@@ -186,7 +187,7 @@ int main()
 
 
     Model fish = Model(load_wavefront_obj_to_MMmesh("assets/models/fish.obj"));
-    //Model cone = Model(make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    Model cone = Model(make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
@@ -396,18 +397,18 @@ int main()
             // Instanced rendering of boid_model for every boid created
             if (fishModel) {
                 Mat44f animation = make_shear_x(0.f, tailAngle);
-                fish.render(camera.position, world2projection, boid->model2world*animation, shader);
+                fish.renderMMMesh(camera.position, world2projection, boid->model2world*animation, MMshader);
             }
-            //else
-            //    cone.render(camera.position, world2projection, boid->model2world, shader);
+            else
+                cone.renderSMesh(camera.position, world2projection, boid->model2world, SimpleShader);
         }
 
         // Render terrain with specified shader
-        //terrain.render(camera.position, world2projection, terrain.model2world, shader);
+        terrain.renderSMesh(camera.position, world2projection, terrain.model2world, SimpleShader);
 
         if(boidControl == POINT_GIVEN)
-        // Location point for directed movement
-            //sphere.render(camera.position, world2projection, make_translation(targetLocation), shader);
+        //Location point for directed movement
+            sphere.renderSMesh(camera.position, world2projection, make_translation(targetLocation), SimpleShader);
         
         // Enable alpha blending
         glEnable(GL_BLEND);
@@ -416,9 +417,9 @@ int main()
         // Draw blended objects
 
         // Render obstacles
-  //      for (auto obstacle : obstacles) {
-  //          obstacle->model->render(camera.position, world2projection, obstacle->model2world, shader);
-		//}
+        for (auto obstacle : obstacles) {
+            obstacle->model->renderSMesh(camera.position, world2projection, obstacle->model2world, SimpleShader);
+		}
 
         glDisable(GL_BLEND); 
 
@@ -448,7 +449,7 @@ int main()
     //cone.~Model();
     fish.~Model();
     sphere.~Model();
-    shader.~Shader();
+    MMshader.~Shader();
 
     for (auto boid : boids) {
 		delete boid;
