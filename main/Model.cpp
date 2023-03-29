@@ -1,7 +1,9 @@
 #include "Model.hpp"
+#include <string>
 
 #define POSITIONS 0
 #define NORMALS 1
+#define MAT_INDEXES 2
 
 
 RenderData Model::setupRendering(Mesh const& mesh)
@@ -25,11 +27,16 @@ RenderData Model::setupRendering(Mesh const& mesh)
     glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(NORMALS));
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(Vec3f), normals.data(), GL_STATIC_DRAW);
 
+    data.VBO.emplace_back();
+    glGenBuffers(1, &data.VBO.at(MAT_INDEXES));
+    glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(MAT_INDEXES));
+    glBufferData(GL_ARRAY_BUFFER, this->materialIndexes.size() * sizeof(int), this->materialIndexes.data(), GL_STATIC_DRAW);
+
     // VAO
     glGenVertexArrays(1, &data.VAO);
     glBindVertexArray(data.VAO);
 
-    for (GLuint i = 0; i < data.VBO.size(); i++) {
+    for (GLuint i = 0; i < 2; i++) {
         glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(i));
         glVertexAttribPointer(
             i,	// location = 0 in vertex shader
@@ -39,6 +46,15 @@ RenderData Model::setupRendering(Mesh const& mesh)
         );
         glEnableVertexAttribArray(i);
     }
+
+    glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(MAT_INDEXES));
+    glVertexAttribIPointer(
+		MAT_INDEXES,	// location = 2 in vertex shader
+		1, GL_INT, 0,	// 1 for material index
+		(GLvoid*)0	// data starts at offset 0 in VBO
+	);
+    glEnableVertexAttribArray(MAT_INDEXES);
+
 
     // Reset state
     glEnableVertexAttribArray(0);
@@ -57,24 +73,36 @@ void Model::render(Vec3f cameraPosition, Mat44f world2projection, Mat44f model2w
         1, GL_TRUE, world2projection.v
     );
 
+    GLuint loc;
+    
     // material properties
-    GLuint loc = glGetUniformLocation(shader.data.shaderProgram, "material.Ambient");
-    glUniform3f(loc, mat.ambient.x, mat.ambient.y, mat.ambient.z);
+    for (int i = 0; i < materials.size(); i++) {
+        char uniformName[30];
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material.Diffuse");
-    glUniform3f(loc, mat.diffuse.x, mat.diffuse.y, mat.diffuse.z);
+        sprintf(uniformName, "material[%d].Ambient", i);
+        loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
+        glUniform3f(loc, materials.at(i).ambient.x, materials.at(i).ambient.y, materials.at(i).ambient.z);
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material.Specular");
-    glUniform3f(loc, mat.specular.x, mat.specular.y, mat.specular.z);
+        sprintf(uniformName, "material[%d].Diffuse", i);
+        loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
+        glUniform3f(loc, materials.at(i).diffuse.x, materials.at(i).diffuse.y, materials.at(i).diffuse.z);
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material.Emission");
-    glUniform3f(loc, mat.emission.x, mat.emission.y, mat.emission.z);
+        sprintf(uniformName, "material[%d].Specular", i);
+        loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
+        glUniform3f(loc, materials.at(i).specular.x, materials.at(i).specular.y, materials.at(i).specular.z);
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material.Shininess");
-    glUniform1f(loc, mat.shininess);
+        sprintf(uniformName, "material[%d].Emission", i);
+        loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
+        glUniform3f(loc, materials.at(i).emission.x, materials.at(i).emission.y, materials.at(i).emission.z);
 
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material.Alpha");
-    glUniform1f(loc, mat.alpha);
+        sprintf(uniformName, "material[%d].Shininess", i);
+        loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
+        glUniform1f(loc, materials.at(i).shininess);
+
+        sprintf(uniformName, "material[%d].Alpha", i);
+        loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
+        glUniform1f(loc, materials.at(i).alpha);
+    }
 
     glUniformMatrix4fv(
         1,

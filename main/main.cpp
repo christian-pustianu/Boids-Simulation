@@ -168,13 +168,13 @@ int main()
     Shader shader = Shader("assets/shaders/BlinnPhong.vert", "assets/shaders/BlinnPhong.frag");
 
     // Define objects
-    Model terrain = Model(load_wavefront_obj("assets/models/terrain.obj"));
+    Model terrain = Model(load_wavefront_obj_to_simplemesh("assets/models/terrain.obj"));
 
     //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
-    Model box = Model(load_wavefront_obj("assets/models/box.obj"));
+    Model box = Model(load_wavefront_obj_to_simplemesh("assets/models/box.obj"));
 
-    Model sphere = Model(load_wavefront_obj("assets/models/sphere.obj"));
+    Model sphere = Model(load_wavefront_obj_to_simplemesh("assets/models/sphere.obj"));
 
     std::vector<Obstacle*> obstacles;
     //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
@@ -185,8 +185,8 @@ int main()
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
 
 
-    Model fish = Model(load_wavefront_obj("assets/models/fish.obj"));
-    Model cone = Model(make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    Model fish = Model(load_wavefront_obj_to_MMmesh("assets/models/fish.obj"));
+    //Model cone = Model(make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
@@ -398,16 +398,16 @@ int main()
                 Mat44f animation = make_shear_x(0.f, tailAngle);
                 fish.render(camera.position, world2projection, boid->model2world*animation, shader);
             }
-            else
-                cone.render(camera.position, world2projection, boid->model2world, shader);
+            //else
+            //    cone.render(camera.position, world2projection, boid->model2world, shader);
         }
 
         // Render terrain with specified shader
-        terrain.render(camera.position, world2projection, terrain.model2world, shader);
+        //terrain.render(camera.position, world2projection, terrain.model2world, shader);
 
         if(boidControl == POINT_GIVEN)
         // Location point for directed movement
-            sphere.render(camera.position, world2projection, make_translation(targetLocation), shader);
+            //sphere.render(camera.position, world2projection, make_translation(targetLocation), shader);
         
         // Enable alpha blending
         glEnable(GL_BLEND);
@@ -416,9 +416,9 @@ int main()
         // Draw blended objects
 
         // Render obstacles
-        for (auto obstacle : obstacles) {
-            obstacle->model->render(camera.position, world2projection, obstacle->model2world, shader);
-		}
+  //      for (auto obstacle : obstacles) {
+  //          obstacle->model->render(camera.position, world2projection, obstacle->model2world, shader);
+		//}
 
         glDisable(GL_BLEND); 
 
@@ -445,7 +445,7 @@ int main()
     ImGui::DestroyContext();
 
     terrain.~Model();
-    cone.~Model();
+    //cone.~Model();
     fish.~Model();
     sphere.~Model();
     shader.~Shader();

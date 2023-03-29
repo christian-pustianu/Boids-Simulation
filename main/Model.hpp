@@ -10,14 +10,12 @@
 #include <cstdlib>
 #include <ctime>
 
-struct RenderData
-{
+struct RenderData {
 	std::vector<GLuint> VBO;
 	GLuint VAO = 0;
 };
 
-class Model
-{	
+class Model {
 private:
 	void cleanup() {
 		for (GLuint vbo : data.VBO)
@@ -28,16 +26,38 @@ private:
 
 public:
 	RenderData data;
-	Material mat;
+	std::vector<Material> materials;
+	std::vector<int> materialIndexes;
 	std::size_t vertexCount;
 
 	Mat44f model2world = Identity44f;
-	
-	Model(Mesh mesh) {
+
+	//Model(Mesh& mesh) {
+	//	if (SimpleMesh* sm = dynamic_cast<SimpleMesh*>(&mesh)) {
+
+	//	}
+	//}
+
+	Model(SimpleMesh mesh) {
 		data = setupRendering(mesh);
 		vertexCount = mesh.vertices.size();
-		mat = mesh.material;
+		materials.push_back(mesh.material);
+		materialIndexes = std::vector<int>(vertexCount, 0);
 	};
+
+	Model(MultiMaterialMesh mesh) {
+		materialIndexes = mesh.materialIndexes;
+		data = setupRendering(mesh);
+		vertexCount = mesh.vertices.size();
+		materials = mesh.materials;
+	};
+
+	// TODO: TexturedMesh
+	//Model(TexturedMesh mesh) {
+	//	data = setupRendering(mesh);
+	//	vertexCount = mesh.vertices.size();
+	//	materials.push_back(Material());
+	//};
 
 	~Model() {
 		cleanup();

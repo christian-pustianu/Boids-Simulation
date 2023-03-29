@@ -18,12 +18,14 @@ struct Light
 		float Strength;
 };
 
+
 // Input data
 in vec3 v2fWorldPosition;
 in vec3 v2fNormal;
+flat in int v2fMaterialIndex;
 
 // Uniform data
-uniform Material material;
+uniform Material material[10];
 uniform Light light;
 layout( location = 2 ) uniform vec3 camera;
 
@@ -46,13 +48,13 @@ void main()
 	vec3 H = normalize( L + V ); // H^
 	
 	float NdotL = max( 0.0, dot( N, L ) );
-	float HdotN = pow(max( 0.0, dot( H, N )), material.Shininess);
+	float HdotN = pow(max( 0.0, dot( H, N )), material[v2fMaterialIndex].Shininess);
 	
 	// Corrected Blinn-Phong
 	// I_p = k_a * I_a + k_d * I_l/pi * (N^*L^)_+ + (a' + 2)/8 k_s * I_l * (H^*N^)_+^a' + I_e
-	oColor = vec4(material.Ambient * light.Ambient + 
-			 material.Diffuse * light_color / 3.1415926 * NdotL + 
-			 (material.Shininess + 2) / 8 * material.Specular * light_color * HdotN + 
-			 material.Emission, material.Alpha);
+	oColor = vec4(material[v2fMaterialIndex].Ambient * light.Ambient + 
+			 material[v2fMaterialIndex].Diffuse * light_color / 3.1415926 * NdotL + 
+			 (material[v2fMaterialIndex].Shininess + 2) / 8 * material[v2fMaterialIndex].Specular * light_color * HdotN + 
+			 material[v2fMaterialIndex].Emission, material[v2fMaterialIndex].Alpha);
 
 }

@@ -21,24 +21,40 @@ struct Material {
 	float alpha = 1.f;
 };
 
-class Mesh
-{
+class Mesh {
 public:
-	bool hasTexture = false;
 	std::vector<Vertex> vertices;
-	std::vector<GLuint> textures;
+
+	Mesh(std::vector<Vertex> vertices) {
+		this->vertices = vertices;
+	};
+};
+
+class SimpleMesh : public Mesh {
+public:
 	Material material;
 
-	Mesh(std::vector<Vertex> vertices, Material material) {
-		this->vertices = vertices;
+	SimpleMesh(std::vector<Vertex> vertices, Material material) : Mesh(vertices) {
 		this->material = material;
 	};
-		
-	Mesh(std::vector<Vertex> vertices, std::vector<GLuint> textures = {}) {
-		this->vertices = vertices;
-		this->textures = textures;
-		if (this->textures.size() != 0)
-			this->hasTexture = true;
-	};
+};
 
+class MultiMaterialMesh : public Mesh {
+	public:
+	std::vector<Material> materials;
+	std::vector<int> materialIndexes;
+
+	MultiMaterialMesh(std::vector<Vertex> vertices, std::vector<Material> materials, std::vector<int> materialIndexes) : Mesh(vertices) {
+		this->materials = materials;
+		this->materialIndexes = materialIndexes;
+	};
+};
+
+class TexturedMesh : public Mesh {
+public:
+	std::vector<GLuint> textures;
+
+	TexturedMesh(std::vector<Vertex> vertices, std::vector<GLuint> textures) : Mesh(vertices) {
+		this->textures = textures;
+	};
 };

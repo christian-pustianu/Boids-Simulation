@@ -41,7 +41,7 @@ Mesh make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
 
 	Material material;
 	material.ambient = color;
-	Mesh mesh(vertices, material);
+	Mesh mesh(vertices);
 	return mesh;
 }
 
