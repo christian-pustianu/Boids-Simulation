@@ -14,8 +14,8 @@ struct Vertex {
 
 struct Material {
 	Vec3f ambient = { 0.8f, 0.8f, 0.8f };
-	Vec3f diffuse = { 0.2f, 0.2f, 0.2f };
-	Vec3f specular = { 0.f, 0.f, 0.f };
+	Vec3f diffuse = { 0.6f, 0.6f, 0.6f };
+	Vec3f specular = { 0.2f, 0.2f, 0.2f };
 	Vec3f emission = { 0.f, 0.f, 0.f };
 	float shininess = 0.5f;
 	float alpha = 1.f;
