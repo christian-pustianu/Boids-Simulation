@@ -33,6 +33,28 @@ SimpleMesh load_wavefront_obj_to_simplemesh(char const* aPath) {
 				result.attributes.normals[idx.normal_index * 3 + 2]
 			}, Vec2f{} });
 		}
+
+		// Find the face index
+		auto const& mat = result.materials[shape.mesh.material_ids[0]];
+
+		if (!mat.ambient.empty())
+			material.ambient = Vec3f{ mat.ambient[0], mat.ambient[1], mat.ambient[2] };
+
+		if (!mat.diffuse.empty())
+			material.diffuse = Vec3f{ mat.diffuse[0], mat.diffuse[1], mat.diffuse[2] };
+
+		if (!mat.specular.empty())
+			material.specular = Vec3f{ mat.specular[0], mat.specular[1], mat.specular[2] };
+			
+		if (!mat.emission.empty())
+			material.emission = Vec3f{ mat.emission[0], mat.emission[1], mat.emission[2] };
+			
+		if (mat.shininess)
+			material.shininess = mat.shininess;
+
+		if (mat.dissolve)
+			material.alpha = mat.dissolve;
+						
 	}
 
 	// Find the face index
