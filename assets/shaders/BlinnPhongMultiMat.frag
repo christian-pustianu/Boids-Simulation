@@ -1,6 +1,7 @@
 #version 430
 
-struct Material {
+struct Material
+{
         vec3 Ambient; // k_a
         vec3 Diffuse; // k_d
         vec3 Specular; // k_s
@@ -9,7 +10,8 @@ struct Material {
 		float Alpha; // alpha (transparency)
 };
 
-struct Light {
+struct Light
+{
 		vec3 Position; // P_light
 		vec3 Ambient; // I_a
 		vec3 Color; // I_l
@@ -23,12 +25,9 @@ in vec3 v2fNormal;
 flat in int v2fMaterialIndex;
 
 // Uniform data
-//layout (std140) uniform Materials {
-//    Material materials[10];
-//};
-uniform Material material[10];
 uniform Light light;
 layout( location = 2 ) uniform vec3 camera;
+layout( location = 3 ) uniform Material material[10];
 
 // Output data
 layout( location = 0 ) out vec4 oColor;

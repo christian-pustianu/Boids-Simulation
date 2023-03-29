@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <string>
 
 struct RenderData {
 	std::vector<GLuint> VBO;
@@ -28,6 +29,7 @@ public:
 	RenderData data;
 	std::vector<Material> materials;
 	std::size_t vertexCount;
+	std::vector<std::string> uniformNames;
 
 	Mat44f model2world = Identity44f;
 
@@ -41,6 +43,20 @@ public:
 		data = setupRendering_for_MMMesh(mesh);
 		vertexCount = mesh.vertices.size();
 		materials = mesh.materials;
+		for (int i = 0; i < materials.size(); i++) {
+			std::string name = "material[" + std::to_string(i) + "].Ambient";
+			uniformNames.push_back(name);
+			name = "material[" + std::to_string(i) + "].Diffuse";
+			uniformNames.push_back(name);
+			name = "material[" + std::to_string(i) + "].Specular";
+			uniformNames.push_back(name);
+			name = "material[" + std::to_string(i) + "].Emission";
+			uniformNames.push_back(name);
+			name = "material[" + std::to_string(i) + "].Shininess";
+			uniformNames.push_back(name);
+			name = "material[" + std::to_string(i) + "].Alpha";
+			uniformNames.push_back(name);
+		}
 	};
 
 	// TODO: TexturedMesh

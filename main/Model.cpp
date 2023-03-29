@@ -118,144 +118,17 @@ void Model::renderMMMesh(Vec3f cameraPosition, Mat44f world2projection, Mat44f m
     );
 
     GLuint loc;
+
     
-    //// material properties
-    //for (int i = 0; i < materials.size(); i++) {
-    //    char uniformName[30];
-
-    //    sprintf(uniformName, "material[%d].Ambient", i);
-    //    loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
-    //    glUniform3f(loc, materials.at(i).ambient.x, materials.at(i).ambient.y, materials.at(i).ambient.z);
-
-    //    sprintf(uniformName, "material[%d].Diffuse", i);
-    //    loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
-    //    glUniform3f(loc, materials.at(i).diffuse.x, materials.at(i).diffuse.y, materials.at(i).diffuse.z);
-
-    //    sprintf(uniformName, "material[%d].Specular", i);
-    //    loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
-    //    glUniform3f(loc, materials.at(i).specular.x, materials.at(i).specular.y, materials.at(i).specular.z);
-
-    //    sprintf(uniformName, "material[%d].Emission", i);
-    //    loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
-    //    glUniform3f(loc, materials.at(i).emission.x, materials.at(i).emission.y, materials.at(i).emission.z);
-
-    //    sprintf(uniformName, "material[%d].Shininess", i);
-    //    loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
-    //    glUniform1f(loc, materials.at(i).shininess);
-
-    //    sprintf(uniformName, "material[%d].Alpha", i);
-    //    loc = glGetUniformLocation(shader.data.shaderProgram, uniformName);
-    //    glUniform1f(loc, materials.at(i).alpha);
-    //}
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[0].Ambient");
-    glUniform3f(loc, materials.at(0).ambient.x, materials.at(0).ambient.y, materials.at(0).ambient.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[0].Diffuse");
-    glUniform3f(loc, materials.at(0).diffuse.x, materials.at(0).diffuse.y, materials.at(0).diffuse.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[0].Specular");
-    glUniform3f(loc, materials.at(0).specular.x, materials.at(0).specular.y, materials.at(0).specular.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[0].Emission");
-    glUniform3f(loc, materials.at(0).emission.x, materials.at(0).emission.y, materials.at(0).emission.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[0].Shininess");
-    glUniform1f(loc, materials.at(0).shininess);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Alpha");
-    glUniform1f(loc, materials.at(1).alpha);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Ambient");
-    glUniform3f(loc, materials.at(1).ambient.x, materials.at(1).ambient.y, materials.at(1).ambient.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Diffuse");
-    glUniform3f(loc, materials.at(1).diffuse.x, materials.at(1).diffuse.y, materials.at(1).diffuse.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Specular");
-    glUniform3f(loc, materials.at(1).specular.x, materials.at(1).specular.y, materials.at(1).specular.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Emission");
-    glUniform3f(loc, materials.at(1).emission.x, materials.at(1).emission.y, materials.at(1).emission.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Shininess");
-    glUniform1f(loc, materials.at(1).shininess);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[1].Alpha");
-    glUniform1f(loc, materials.at(1).alpha);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[2].Ambient");
-    glUniform3f(loc, materials.at(2).ambient.x, materials.at(2).ambient.y, materials.at(2).ambient.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[2].Diffuse");
-    glUniform3f(loc, materials.at(2).diffuse.x, materials.at(2).diffuse.y, materials.at(2).diffuse.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[2].Specular");
-    glUniform3f(loc, materials.at(2).specular.x, materials.at(2).specular.y, materials.at(2).specular.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[2].Emission");
-    glUniform3f(loc, materials.at(2).emission.x, materials.at(2).emission.y, materials.at(2).emission.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[2].Shininess");
-    glUniform1f(loc, materials.at(2).shininess);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[2].Alpha");
-    glUniform1f(loc, materials.at(2).alpha);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[3].Ambient");
-    glUniform3f(loc, materials.at(3).ambient.x, materials.at(3).ambient.y, materials.at(3).ambient.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[3].Diffuse");
-    glUniform3f(loc, materials.at(3).diffuse.x, materials.at(3).diffuse.y, materials.at(3).diffuse.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[3].Specular");
-    glUniform3f(loc, materials.at(3).specular.x, materials.at(3).specular.y, materials.at(3).specular.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[3].Emission");
-    glUniform3f(loc, materials.at(3).emission.x, materials.at(3).emission.y, materials.at(3).emission.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[3].Shininess");
-    glUniform1f(loc, materials.at(3).shininess);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[3].Alpha");
-    glUniform1f(loc, materials.at(3).alpha);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[4].Ambient");
-    glUniform3f(loc, materials.at(4).ambient.x, materials.at(4).ambient.y, materials.at(4).ambient.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[4].Diffuse");
-    glUniform3f(loc, materials.at(4).diffuse.x, materials.at(4).diffuse.y, materials.at(4).diffuse.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[4].Specular");
-    glUniform3f(loc, materials.at(4).specular.x, materials.at(4).specular.y, materials.at(4).specular.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[4].Emission");
-    glUniform3f(loc, materials.at(4).emission.x, materials.at(4).emission.y, materials.at(4).emission.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[4].Shininess");
-    glUniform1f(loc, materials.at(4).shininess);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[4].Alpha");
-    glUniform1f(loc, materials.at(4).alpha);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[5].Ambient");
-    glUniform3f(loc, materials.at(5).ambient.x, materials.at(5).ambient.y, materials.at(5).ambient.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[5].Diffuse");
-    glUniform3f(loc, materials.at(5).diffuse.x, materials.at(5).diffuse.y, materials.at(5).diffuse.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[5].Specular");
-    glUniform3f(loc, materials.at(5).specular.x, materials.at(5).specular.y, materials.at(5).specular.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[5].Emission");
-    glUniform3f(loc, materials.at(5).emission.x, materials.at(5).emission.y, materials.at(5).emission.z);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[5].Shininess");
-    glUniform1f(loc, materials.at(5).shininess);
-
-    loc = glGetUniformLocation(shader.data.shaderProgram, "material[5].Alpha");
-    glUniform1f(loc, materials.at(5).alpha);
-
+    // material properties
+    for (int i = 0; i < materials.size(); i++) {
+        glUniform3f(3 + i * 6, materials.at(i).ambient.x, materials.at(i).ambient.y, materials.at(i).ambient.z);
+        glUniform3f(4 + i * 6, materials.at(i).diffuse.x, materials.at(i).diffuse.y, materials.at(i).diffuse.z);
+        glUniform3f(5 + i * 6, materials.at(i).specular.x, materials.at(i).specular.y, materials.at(i).specular.z);
+        glUniform3f(6 + i * 6, materials.at(i).emission.x, materials.at(i).emission.y, materials.at(i).emission.z);
+        glUniform1f(7 + i * 6, materials.at(i).shininess);
+        glUniform1f(8 + i * 6, materials.at(i).alpha);
+    }
 
     glUniformMatrix4fv(
         1,
