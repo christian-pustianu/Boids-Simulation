@@ -32,11 +32,21 @@ private:
 	Mat44f translationMatrix = Identity44f;
 
 	// give random position within simulation space
-	void randomizePosition() {
+	void randomizePosition(std::vector<Obstacle*> obstacles) {
 		// spawn boid at random position within simulation space (x, y, z) = (-100, 2, -100) to (100, 50, 100)
-		this->currentPosition = { (float)rand() / RAND_MAX * X_RANGE + X_MIN,
+		bool collision = false;
+		do {
+			collision = false;
+			this->currentPosition = { (float)rand() / RAND_MAX * X_RANGE + X_MIN,
 									(float)rand() / RAND_MAX * Y_RANGE + Y_MIN,
 									(float)rand() / RAND_MAX * Z_RANGE + Z_MIN };
+			for (auto obs : obstacles) {
+				if (obs->isColliding(this->currentPosition)) {
+					collision = true;
+					break;
+				}
+			}
+		} while (collision);
 	}
 
 	// give random direction
@@ -49,9 +59,9 @@ public:
 	Vec3f currentPosition = { 0.f, 2.f, 0.f };
 	Mat44f model2world = Identity44f;
 
-	Boid() {
+	Boid(std::vector<Obstacle*> obstacles) {
 		// Spawn boid at random position and direction, going straight forward
-		randomizePosition();
+		randomizePosition(obstacles);
 		randomizeDirection();
 		this->targetDirection = currentDirection;
 		// Initial rotation for object

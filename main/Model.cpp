@@ -36,16 +36,23 @@ RenderData Model::setupRendering_for_MMMesh(MultiMaterialMesh const& mesh)
     glGenVertexArrays(1, &data.VAO);
     glBindVertexArray(data.VAO);
 
-    for (GLuint i = 0; i < 2; i++) {
-        glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(i));
-        glVertexAttribPointer(
-            i,	// location = 0 in vertex shader
-            3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
-            0,	// stride = 0 no padding
-            (GLvoid*)0	// data starts at offset 0 in VBO
-        );
-        glEnableVertexAttribArray(i);
-    }
+    glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(POSITIONS));
+    glVertexAttribPointer(
+        POSITIONS,	// location = 0 in vertex shader
+        3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
+        0,	// stride = 0 no padding
+        (GLvoid*)0	// data starts at offset 0 in VBO
+    );
+    glEnableVertexAttribArray(POSITIONS);
+
+    glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(NORMALS));
+    glVertexAttribPointer(
+        NORMALS,	// location = 0 in vertex shader
+        3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
+        0,	// stride = 0 no padding
+        (GLvoid*)0	// data starts at offset 0 in VBO
+    );
+    glEnableVertexAttribArray(NORMALS);
 
     glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(MAT_INDEXES));
     glVertexAttribIPointer(
@@ -89,16 +96,23 @@ RenderData Model::setupRendering_for_SMesh(SimpleMesh const& mesh)
     glGenVertexArrays(1, &data.VAO);
     glBindVertexArray(data.VAO);
 
-    for (GLuint i = 0; i < 2; i++) {
-        glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(i));
-        glVertexAttribPointer(
-            i,	// location = 0 in vertex shader
-            3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
-            0,	// stride = 0 no padding
-            (GLvoid*)0	// data starts at offset 0 in VBO
-        );
-        glEnableVertexAttribArray(i);
-    }
+    glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(POSITIONS));
+    glVertexAttribPointer(
+        POSITIONS,	// location = 0 in vertex shader
+        3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
+        0,	// stride = 0 no padding
+        (GLvoid*)0	// data starts at offset 0 in VBO
+    );
+    glEnableVertexAttribArray(POSITIONS);
+
+    glBindBuffer(GL_ARRAY_BUFFER, data.VBO.at(NORMALS));
+    glVertexAttribPointer(
+        NORMALS,	// location = 0 in vertex shader
+        3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
+        0,	// stride = 0 no padding
+        (GLvoid*)0	// data starts at offset 0 in VBO
+    );
+    glEnableVertexAttribArray(NORMALS);
 
     // Reset state
     glEnableVertexAttribArray(0);

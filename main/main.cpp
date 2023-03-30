@@ -193,7 +193,7 @@ int main()
     srand((time(NULL)));
     for (unsigned int i = 0; i < boidsCount; i++)
     {
-	    boids.push_back(new Boid());
+	    boids.push_back(new Boid(obstacles));
     }
 
     //ImGUI setup
@@ -218,7 +218,7 @@ int main()
         // Update number of boids if changed by the GUI
         while (boidsCount > boids.size())
         {
-            boids.push_back(new Boid());
+            boids.push_back(new Boid(obstacles));
         }
 
         while (boidsCount < boids.size())
@@ -377,9 +377,9 @@ int main()
         //#pragma omp parallel for private(cohesion, alignment, separation, avoid)
         for (auto boid : boids) {
             if (!paused) {
-                int threadNum = omp_get_thread_num();
-                int maxThreads = omp_get_max_threads();
-                printf(" Hello from thread %i of %i!\n", threadNum, maxThreads);
+                //int threadNum = omp_get_thread_num();
+                //int maxThreads = omp_get_max_threads();
+                //printf(" Hello from thread %i of %i!\n", threadNum, maxThreads);
                 std::vector<Boid*> neighbours = boid->findNeighbours(boids, boidVisionRange);
                 cohesion = boid->applyCohesion(neighbours, cohesionStrength);
                 alignment = boid->applyAlignment(neighbours, alignmentStrength);
