@@ -4,7 +4,13 @@ void Boid::updateDirection(float speed, float transition) {
 	// Rotation on custom axis from object's original direction to currentDirection
 	float rotationAngle = acos(dot(this->initialDirection, this->currentDirection));
 	Vec3f rotationAxis = cross(this->initialDirection, this->currentDirection);
-	this->rotationMatrix = make_rotation_custom_axis(normalize(rotationAxis), rotationAngle);
+	if (rotationAngle <= radians(90)) {
+		this->rotationMatrix = make_rotation_custom_axis(normalize(rotationAxis), rotationAngle);
+	}
+	// If the angle is greater than 90 deg, we need to reverse the rotation to avoid the fish swimming upside down due to the normal rotation.
+	else {
+		this->rotationMatrix = make_rotation_custom_axis(normalize(rotationAxis), -(radians(180) - rotationAngle)) * make_rotation_y(radians(180));
+	}
 
 	// Translation using different types of linear interpolation
 
