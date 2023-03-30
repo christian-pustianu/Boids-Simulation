@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 
-#include "Mesh.hpp"
+#include "Model.hpp"
 
 #include "../math/vec3.hpp"
 #include "../math/mat44.hpp"
@@ -20,4 +20,4 @@
 * 
 * @return The cone's mesh object.
 */
-SimpleMesh make_cone(std::size_t subdivs = 16, Vec3f color = { 1.f, 1.f, 1.f }, Mat44f transformMatrix = Identity44f);
+Model make_cone(std::size_t subdivs = 16, Vec3f color = { 1.f, 1.f, 1.f }, Mat44f transformMatrix = Identity44f);

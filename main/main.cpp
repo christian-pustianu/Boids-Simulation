@@ -11,7 +11,6 @@
 
 #include "Shader.hpp"
 #include "Model.hpp"
-#include "Mesh.hpp"
 #include "Boid.hpp"
 #include "Obstacle.hpp"
 
@@ -166,16 +165,17 @@ int main()
     
     // Set up shaders
     Shader SimpleShader = Shader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
-    Shader MMshader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
+    Shader MMShader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
+    GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MMShader.data.shaderProgram };
 
     // Define objects
-    Model terrain = Model(load_wavefront_obj_to_simplemesh("assets/models/terrain.obj"));
+    Model terrain = load_wavefront_obj("assets/models/terrain.obj");
 
     //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
-    Model box = Model(load_wavefront_obj_to_simplemesh("assets/models/box.obj"));
+    Model box = Model(load_wavefront_obj("assets/models/box.obj"));
 
-    Model sphere = Model(load_wavefront_obj_to_simplemesh("assets/models/sphere.obj"));
+    Model sphere = Model(load_wavefront_obj("assets/models/sphere.obj"));
 
     std::vector<Obstacle*> obstacles;
     //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
@@ -186,8 +186,8 @@ int main()
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
 
 
-    Model fish = Model(load_wavefront_obj_to_MMmesh("assets/models/fish.obj"));
-    Model cone = Model(make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f)));
+    Model fish = load_wavefront_obj("assets/models/fish.obj");
+    Model cone = make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
@@ -397,18 +397,18 @@ int main()
             // Instanced rendering of boid_model for every boid created
             if (fishModel) {
                 Mat44f animation = make_shear_x(0.f, tailAngle);
-                fish.renderMMMesh(camera.position, world2projection, boid->model2world*animation, MMshader);
+                fish.render(camera.position, world2projection, boid->model2world*animation, shadersInUse);
             }
             else
-                cone.renderSMesh(camera.position, world2projection, boid->model2world, SimpleShader);
+                cone.render(camera.position, world2projection, boid->model2world, shadersInUse);
         }
 
         // Render terrain with specified shader
-        terrain.renderSMesh(camera.position, world2projection, terrain.model2world, SimpleShader);
+        terrain.render(camera.position, world2projection, terrain.model2world, shadersInUse);
 
         if(boidControl == POINT_GIVEN)
         //Location point for directed movement
-            sphere.renderSMesh(camera.position, world2projection, make_translation(targetLocation), SimpleShader);
+            sphere.render(camera.position, world2projection, make_translation(targetLocation), shadersInUse);
         
         // Enable alpha blending
         glEnable(GL_BLEND);
@@ -418,7 +418,7 @@ int main()
 
         // Render obstacles
         for (auto obstacle : obstacles) {
-            obstacle->model->renderSMesh(camera.position, world2projection, obstacle->model2world, SimpleShader);
+            obstacle->model->render(camera.position, world2projection, obstacle->model2world, shadersInUse);
 		}
 
         glDisable(GL_BLEND); 
@@ -447,9 +447,8 @@ int main()
 
     terrain.~Model();
     //cone.~Model();
-    fish.~Model();
+    //fish.~Model();
     sphere.~Model();
-    MMshader.~Shader();
 
     for (auto boid : boids) {
 		delete boid;

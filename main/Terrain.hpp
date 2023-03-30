@@ -11,4 +11,4 @@
 *
 * @return The terrain's mesh object.
 */
-SimpleMesh make_terrain(const char* heightmap, Mat44f transformMatrix = Identity44f);
+//Model make_terrain(const char* heightmap, Mat44f transformMatrix = Identity44f);

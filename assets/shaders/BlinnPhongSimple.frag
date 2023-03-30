@@ -24,9 +24,9 @@ in vec3 v2fWorldPosition;
 in vec3 v2fNormal;
 
 // Uniform data
-uniform Material material;
 uniform Light light;
 layout( location = 2 ) uniform vec3 camera;
+layout(location = 3) uniform Material material;
 
 // Output data
 layout( location = 0 ) out vec4 oColor;
