@@ -31,19 +31,19 @@ void Model::setupRendering()
 
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO.at(POSITIONS));
     glVertexAttribPointer(
-        POSITIONS,	// location = 0 in vertex shader
-        3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
-        0,	// stride = 0 no padding
-        (GLvoid*)0	// data starts at offset 0 in VBO
+        POSITIONS,	// location in .vert
+        3, GL_FLOAT, GL_FALSE, // 3 floats for positions
+        0,	// no padding
+        (GLvoid*)0	// offset 0 in VBO
     );
     glEnableVertexAttribArray(POSITIONS);
 
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO.at(NORMALS));
     glVertexAttribPointer(
-        NORMALS,	// location = 0 in vertex shader
-        3, GL_FLOAT, GL_FALSE, // 3 for positions/normals/
-        0,	// stride = 0 no padding
-        (GLvoid*)0	// data starts at offset 0 in VBO
+        NORMALS,	// location in .vert
+        3, GL_FLOAT, GL_FALSE, // 3 floats for normals
+        0,	// no padding
+        (GLvoid*)0	// offset 0 in VBO
     );
     glEnableVertexAttribArray(NORMALS);
 
@@ -55,9 +55,10 @@ void Model::setupRendering()
 
         glBindBuffer(GL_ARRAY_BUFFER, this->VBO.at(MAT_INDEXES));
         glVertexAttribIPointer(
-		    MAT_INDEXES,	// location = 2 in vertex shader
-		    1, GL_INT, 0,	// 1 for material index
-		    (GLvoid*)0	// data starts at offset 0 in VBO
+		    MAT_INDEXES,	// location in .vert
+		    1, GL_INT,	// 1 int for material index
+            0,	// no padding
+		    (GLvoid*)0	// offset 0 in VBO
 	    );
         glEnableVertexAttribArray(MAT_INDEXES);
     }

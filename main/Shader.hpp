@@ -15,6 +15,12 @@ private:
 	
 	GLuint setupVertexShader();
 	GLuint setupFragmentShader();
+
+	void cleanup() {
+		glDeleteShader(data.vertexShader);
+		glDeleteShader(data.fragmentShader);
+		glDeleteProgram(data.shaderProgram);
+	}
 	
 public:
 	// Container struct for shaders.
@@ -24,14 +30,8 @@ public:
 		GLuint vertexShader;
 		GLuint fragmentShader;
 		bool success;
-
-		void cleanup() {
-			glDeleteShader(vertexShader);
-			glDeleteShader(fragmentShader);
-			glDeleteProgram(shaderProgram);
-		}
 	};
-	
+
 	ShaderData data;
 	
 	Shader(const char* vertSource, const char* fragSource) {
@@ -45,7 +45,7 @@ public:
 	};
 
 	~Shader() {
-		data.cleanup();
+		cleanup();
 	};
 
 	ShaderData setupShaderProgram();

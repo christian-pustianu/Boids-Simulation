@@ -99,7 +99,7 @@ Shader::ShaderData Shader::setupShaderProgram()
     if (!success) {
         glGetProgramInfoLog(result.shaderProgram, 512, NULL, infoLog);
         std::printf("ERROR:SHADER_PROGRAM:COMPILATION_FAILED\n%s\n", infoLog);
-        result.cleanup();
+        cleanup();
         return {};
     }
 

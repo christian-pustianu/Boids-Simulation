@@ -439,17 +439,12 @@ int main()
         glfwSwapBuffers(window);
     }
 
-    // Clean-up
     // End ImGui processes
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    terrain.~Model();
-    //cone.~Model();
-    //fish.~Model();
-    sphere.~Model();
-
+    // Clean-up
     for (auto boid : boids) {
 		delete boid;
 	}

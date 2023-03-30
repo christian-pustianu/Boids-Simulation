@@ -28,6 +28,17 @@ struct Material {
 };
 
 class Model {
+private:
+	std::vector<GLuint> VBO;
+	GLuint VAO;
+
+	void cleanup() {
+		for (GLuint vbo : VBO)
+			glDeleteBuffers(1, &vbo);
+
+		glDeleteVertexArrays(1, &VAO);
+	};
+
 public:
 	std::vector<Vertex> vertices;
 	std::vector<Material> materials;
@@ -48,19 +59,10 @@ public:
 		setupRendering();
 	}
 
-	~Model() {};
-
-	void cleanup() {
-		for (GLuint vbo : VBO)
-			glDeleteBuffers(1, &vbo);
-
-		glDeleteVertexArrays(1, &VAO);
+	~Model() {
+		cleanup();
 	};
 	
 	void setupRendering();
 	void render(Vec3f, Mat44f, Mat44f, GLuint[]);
-
-private:
-	std::vector<GLuint> VBO;
-	GLuint VAO;
 };
