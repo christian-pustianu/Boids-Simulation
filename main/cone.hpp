@@ -6,10 +6,6 @@
 
 #include "Model.hpp"
 
-#include "../math/vec3.hpp"
-#include "../math/mat44.hpp"
-#include "../math/mat33.hpp"
-
 
 /**
 * @brief Creates a cone mesh made of triangles with vertices, normals and material.

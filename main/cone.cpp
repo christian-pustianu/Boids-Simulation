@@ -1,7 +1,6 @@
 #include "cone.hpp"
 
-Model make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
-{
+Model make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix) {
 	std::vector<Vertex> vertices;
 
 	Mat33f const N = mat44_to_mat33(transpose(invert(transformMatrix)));
@@ -28,8 +27,7 @@ Model make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
 		prevY = y;
 		prevZ = z;
 	}
-	for (auto& v : vertices)
-	{
+	for (auto& v : vertices) {
 		Vec4f p4{ v.positions.x, v.positions.y, v.positions.z, 1.f };
 		Vec4f t = transformMatrix * p4;
 		t /= t.w;
@@ -41,7 +39,6 @@ Model make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix)
 
 	Material material;
 	material.ambient = color;
-	Model model(vertices, material);
-	return model;
+	return Model(vertices, material);
 }
 

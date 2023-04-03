@@ -11,4 +11,4 @@
 *
 * @return The terrain's mesh object.
 */
-//Model make_terrain(const char* heightmap, Mat44f transformMatrix = Identity44f);
+Model make_terrain(const char* heightmap, Vec3f color = { 1.f, 1.f, 1.f }, Mat44f transformMatrix = Identity44f);

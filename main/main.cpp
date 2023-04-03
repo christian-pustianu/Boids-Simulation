@@ -14,6 +14,7 @@
 #include "Boid.hpp"
 #include "Obstacle.hpp"
 
+#include "Terrain.hpp"
 #include "cone.hpp"
 #include "loadobj.hpp"
 
@@ -22,14 +23,12 @@
 
 #include <omp.h>
 
-extern "C"
-{
+extern "C"  {
     // Force the use of the NVIDIA GPU on laptops with switchable graphics
     __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 }
 
-namespace
-{
+namespace {
     // Global constant variables
     constexpr unsigned int WINDOW_WIDTH = 1280;
     constexpr unsigned int WINDOW_HEIGHT = 720;
@@ -71,8 +70,7 @@ namespace
     // Pause switch for the simulation
     bool paused = true;
 
-    struct CameraState
-    {
+    struct CameraState {
         bool active;
         struct move { bool forward, backwards, left, right, up, down; } move;
 
@@ -98,11 +96,9 @@ namespace
 }
 
 
-int main()
-{
+int main() {
     // Initialize glfw
-    if (!glfwInit())
-    {
+    if (!glfwInit()) {
         throw std::exception("Failed to initialize GLFW");
     }
 
@@ -127,8 +123,7 @@ int main()
         "Boids-Simulation",
         nullptr, nullptr);
 
-    if (window == NULL)
-    {
+    if (window == NULL) {
         glfwTerminate();
         throw std::exception("Failed to create GLFW window");
     }
@@ -145,8 +140,7 @@ int main()
     glfwSwapInterval(1);
 
     // Load GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         throw std::exception("Failed to load GLAD");
     }
     std::printf("RENDERER %s\n", glGetString(GL_RENDERER));
@@ -169,7 +163,8 @@ int main()
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MMShader.data.shaderProgram };
 
     // Define objects
-    Model terrain = load_wavefront_obj("assets/models/terrain.obj");
+    //Model terrain = load_wavefront_obj("assets/models/terrain.obj");
+    Model terrain = make_terrain("assets/heightmap.png", { 1.f, 1.f, 1.f }, make_scaling(0.01f, 0.01f, 0.01f));
 
     //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
@@ -211,18 +206,15 @@ int main()
     Vec3f avoid = { 0.f, 0.f, 0.f };
 
     // Start the rendering loop
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         // Update number of boids if changed by the GUI
-        while (boidsCount > boids.size())
-        {
+        while (boidsCount > boids.size()) {
             boids.push_back(new Boid(obstacles));
         }
 
-        while (boidsCount < boids.size())
-        {
+        while (boidsCount < boids.size()) {
             boids.pop_back();
         }
 
@@ -231,8 +223,7 @@ int main()
         glfwGetFramebufferSize(window, &nwidth, &nheight);
 
         // if the window is minimized, wait for it to be restored
-        while (0 == nwidth || 0 == nheight)
-        {
+        while (0 == nwidth || 0 == nheight) {
             glfwWaitEvents();
             glfwGetFramebufferSize(window, &nwidth, &nheight);
         }
@@ -247,8 +238,7 @@ int main()
         // CAMERA MOVEMENT
         float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
-        if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN)
-        {
+        if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN) {
             if (camera.move.forward)
                 camera.position.z -= measurmentUnit;
             else if (camera.move.backwards)
@@ -257,8 +247,7 @@ int main()
             if (camera.position.z <= 0.1f)
                 camera.position.z = 0.1f;
         }
-        else if (camera.mode == FlY_THROUGH)
-        {
+        else if (camera.mode == FlY_THROUGH) {
             if (camera.move.forward)
                 camera.position += camera.front * measurmentUnit;
             else if (camera.move.backwards)
@@ -275,15 +264,13 @@ int main()
 
         // world2camera matrix for different camera modes
         Mat44f world2camera = Identity44f;
-        if (camera.mode == LOCKED_ARC_BALL)
-        {
+        if (camera.mode == LOCKED_ARC_BALL) {
             Mat44f Rx = make_rotation_x(radians(30.f));
             Mat44f Ry = make_rotation_y(camera.rotation.x);
             Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
             world2camera = T * Rx * Ry;
         }
-        else if (camera.mode == FlY_THROUGH)
-        {
+        else if (camera.mode == FlY_THROUGH) {
             world2camera = look_at(camera.position, camera.front, camera.up);
         }
         else if (camera.mode == TOP_DOWN)
@@ -362,7 +349,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Terrain position in world
-        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, 0.f, SIMULATION_SIZE.z);
+        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, 1.f, SIMULATION_SIZE.z);
 
         // Simulation parameters
         float movementSpeed = dt * boidSpeed;

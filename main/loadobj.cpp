@@ -29,10 +29,8 @@ Model load_wavefront_obj(char const* aPath) {
 		materials.push_back(material);
 	}
 
-	for(auto const& shape : result.shapes)
-	{
-		for(std::size_t i = 0; i < shape.mesh.indices.size(); ++i)
-		{
+	for(auto const& shape : result.shapes) {
+		for(std::size_t i = 0; i < shape.mesh.indices.size(); ++i) {
 			auto const& idx = shape.mesh.indices[i];
 
 			vertices.emplace_back(Vertex{

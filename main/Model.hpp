@@ -4,6 +4,7 @@
 #include "Shader.hpp"
 
 #include "../math/mat44.hpp"
+#include "../math/mat33.hpp"
 #include "../math/vec3.hpp"
 #include "../math/vec2.hpp"
 
