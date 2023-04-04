@@ -15,7 +15,7 @@
 #include "Obstacle.hpp"
 
 #include "Terrain.hpp"
-#include "cone.hpp"
+#include "Cone.hpp"
 #include "loadobj.hpp"
 
 #include "../math/mat44.hpp"
@@ -55,8 +55,9 @@ namespace {
 
     float boidSpeed = 40.f;
     float boidVisionRange = 12.f;
+    float boidVisionAngle = 150.f;
 
-    int boidsCount = 100;
+    int boidsCount = 500;
 
     float cohesionStrength = 1.f;
     float alignmentStrength = 1.f;
@@ -64,7 +65,7 @@ namespace {
 
     unsigned int boid_camera = 0;
 
-    bool fishModel = true;
+    bool technicalView = false;
     bool right_click = false;
 
     // Pause switch for the simulation
@@ -163,8 +164,14 @@ int main() {
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MMShader.data.shaderProgram };
 
     // Define objects
-    //Model terrain = load_wavefront_obj("assets/models/terrain.obj");
-    Model terrain = make_terrain("assets/heightmap.png", { 1.f, 1.f, 1.f }, make_scaling(0.01f, 0.01f, 0.01f));
+    // Terrain scaled to a 1 unit size
+    Material terrainMat = Material{ rgb_to_linear({ 172, 150, 83 }), rgb_to_linear({ 189, 171, 117 }), rgb_to_linear({ 205, 192, 152 })};
+    Model terrain = generate_terrain("assets/heightmap.png", terrainMat, make_translation({0.f, 0.f, 0.f}) * make_scaling(0.0078f, 0.0005f, 0.0078f));
+    float maxHeight = 0.f;
+    for (Vertex& v : terrain.vertices) {
+        if (v.positions.y > maxHeight) maxHeight = v.positions.y;
+    }
+    printf("%f\n", maxHeight * SIMULATION_SIZE.y);
 
     //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
@@ -174,7 +181,7 @@ int main() {
 
     std::vector<Obstacle*> obstacles;
     //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 50.f));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 1.f));
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_SIZE.x, 25.f, SIMULATION_SIZE.z }, 10.f));
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
     obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, SIMULATION_SIZE.z }, 10.f));
@@ -182,7 +189,8 @@ int main() {
 
 
     Model fish = load_wavefront_obj("assets/models/fish.obj");
-    Model cone = make_cone(16, {1.f, 1.f, 1.f}, make_scaling(3.f, 1.f, 1.f));
+    Material coneMaterial = {};
+    Model cone = generate_cone(16, coneMaterial, make_scaling(3.f, 1.f, 1.f));
 
     std::vector<Boid*> boids;
     srand((time(NULL)));
@@ -310,23 +318,50 @@ int main() {
             // Render GUI
             ImGui::Begin("Simulation Parameters");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::Checkbox("Pause (SPACE)", &paused);
-            ImGui::SliderInt("Boid Count", &boidsCount, 0, 10000);
-            ImGui::SliderFloat("Boid Speed", &boidSpeed, 0.f, 100.f);
-            ImGui::SliderFloat("Boid Vision Range", &boidVisionRange, 0.f, 15.f);
-            ImGui::Checkbox("Fish model", &fishModel);
-            ImGui::Text("Rules:");
-            ImGui::SliderFloat("Cohesion", &cohesionStrength, 0.f, 5.f);
-            ImGui::SliderFloat("Alignment", &alignmentStrength, 0.f, 5.f);
-            ImGui::SliderFloat("Separation", &separationStrength, 0.f, 5.f);
-            if (ImGui::Button("Default")) {
-                boidSpeed = 40.f;
-                boidVisionRange = 12.f;
-                boidsCount = 500;
-                cohesionStrength = 1.f;
-                alignmentStrength = 1.f;
-                separationStrength = 3.f;
+            ImGui::Checkbox("Pause - PRESS [SPACE]", &paused);
+            if (ImGui::CollapsingHeader("Boid settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::SliderInt("Boid Count", &boidsCount, 0, 1000);
+                ImGui::SliderFloat("Boid Speed", &boidSpeed, 0.f, 100.f);
+                ImGui::SliderFloat("Boid Vision Range", &boidVisionRange, 0.f, 15.f);
+                ImGui::SliderFloat("Boid Vision Angle", &boidVisionAngle, 0.f, 180.f);
+                ImGui::Separator();
+                ImGui::Text("Rules:");
+                ImGui::SliderFloat("Cohesion", &cohesionStrength, 0.f, 5.f);
+                ImGui::SliderFloat("Alignment", &alignmentStrength, 0.f, 5.f);
+                ImGui::SliderFloat("Separation", &separationStrength, 0.f, 5.f);
+                if (ImGui::Button("Default")) {
+                    boidSpeed = 40.f;
+                    boidVisionRange = 12.f;
+                    boidVisionAngle = 150.f;
+                    boidsCount = 500;
+                    cohesionStrength = 1.f;
+                    alignmentStrength = 1.f;
+                    separationStrength = 3.f;
+                }
+                ImGui::Separator();
             }
+            if (ImGui::CollapsingHeader("Camera controls (Instructions)", false)) {
+                ImGui::Columns(2, "My Columns");
+                ImGui::SetColumnWidth(0, 300);
+                ImGui::Text("Camera 1: Locked height ArcBall");
+                ImGui::Text("Camera 2: Top-Down View");
+                ImGui::Text("Camera 3: Fly-Through");
+                ImGui::Text("Camera 4: Third-Person");
+
+
+                ImGui::NextColumn();
+
+                ImGui::SetColumnWidth(1, 100);
+                ImGui::Text("PRESS [1]");
+                ImGui::Text("PRESS [2]");
+                ImGui::Text("PRESS [3]");
+                ImGui::Text("PRESS [4]");
+
+                ImGui::Columns(1); // Don't forget to end the columns when you're done!
+
+                ImGui::Separator();
+            }
+            ImGui::Checkbox("Technical View", &technicalView);
             if(ImGui::Button("No direction")) { boidControl = NO_DIRECTION; targetDirection = { 0.f, 0.f, 0.f }; }
             ImGui::SameLine();
             if (ImGui::Button("Go in direction")) { boidControl = DIRECTION_GIVEN; targetDirection = { 1.f, 0.f, 0.f }; }
@@ -349,14 +384,14 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Terrain position in world
-        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, 1.f, SIMULATION_SIZE.z);
+        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, SIMULATION_SIZE.y, SIMULATION_SIZE.z);
 
         // Simulation parameters
         float movementSpeed = dt * boidSpeed;
         float turnSharpness = movementSpeed * 0.2f;
 
 
-        if (fishModel && !paused) {
+        if (!technicalView && !paused) {
             tailAngle += tailSpeed;
             if (tailAngle >= 0.2f || tailAngle <= -0.2f) tailSpeed = -tailSpeed;
         }
@@ -367,7 +402,7 @@ int main() {
                 //int threadNum = omp_get_thread_num();
                 //int maxThreads = omp_get_max_threads();
                 //printf(" Hello from thread %i of %i!\n", threadNum, maxThreads);
-                std::vector<Boid*> neighbours = boid->findNeighbours(boids, boidVisionRange);
+                std::vector<Boid*> neighbours = boid->findNeighbours(boids, boidVisionRange, boidVisionAngle);
                 cohesion = boid->applyCohesion(neighbours, cohesionStrength);
                 alignment = boid->applyAlignment(neighbours, alignmentStrength);
                 separation = boid->applySeparation(neighbours, separationStrength, boidVisionRange);
@@ -382,7 +417,7 @@ int main() {
                 boid->updateDirection(movementSpeed, turnSharpness);
             }
             // Instanced rendering of boid_model for every boid created
-            if (fishModel) {
+            if (!technicalView) {
                 Mat44f animation = make_shear_x(0.f, tailAngle);
                 fish.render(camera.position, world2projection, boid->model2world*animation, shadersInUse);
             }

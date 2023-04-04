@@ -1,5 +1,6 @@
-// Code adapted from coursework and exercises of the 2022-2023 Semester 1
+// Some code adapted from coursework and exercises of the 2022-2023 Semester 1
 // module "COMP3811 Computer Graphics" at the University of Leeds.
+// This only includes the struct definition and the operator definitions.
 
 #pragma once
 
@@ -10,19 +11,16 @@
 #include "other.hpp"
 
 // Vec3f: 3D vector with floats
-struct Vec3f
-{
+struct Vec3f {
 	float x, y, z;
 
 	constexpr
-	float& operator[] (std::size_t aI) noexcept
-	{
+	float& operator[] (std::size_t aI) noexcept {
 		assert( aI < 3 );
 		return aI[&x];
 	}
 	constexpr
-	float operator[] (std::size_t aI) const noexcept
-	{
+	float operator[] (std::size_t aI) const noexcept {
 		assert( aI < 3 );
 		return aI[&x];
 	}
@@ -30,21 +28,18 @@ struct Vec3f
 
 // Common operators for Vec3f:
 constexpr
-Vec3f operator+( Vec3f vector ) noexcept
-{
+Vec3f operator+( Vec3f vector ) noexcept {
 	return vector;
 }
 
 constexpr
-Vec3f operator-( Vec3f vector ) noexcept
-{
+Vec3f operator-( Vec3f vector ) noexcept {
 	return { -vector.x, -vector.y, -vector.z };
 }
 
 constexpr
-Vec3f operator+( Vec3f leftSide, Vec3f rightSide ) noexcept
-{
-	return Vec3f{
+Vec3f operator+( Vec3f leftSide, Vec3f rightSide ) noexcept {
+	return Vec3f {
 		leftSide.x + rightSide.x,
 		leftSide.y + rightSide.y,
 		leftSide.z + rightSide.z
@@ -52,9 +47,8 @@ Vec3f operator+( Vec3f leftSide, Vec3f rightSide ) noexcept
 }
 
 constexpr
-Vec3f operator-( Vec3f leftSide, Vec3f rightSide ) noexcept
-{
-	return Vec3f{
+Vec3f operator-( Vec3f leftSide, Vec3f rightSide ) noexcept {
+	return Vec3f {
 		leftSide.x - rightSide.x,
 		leftSide.y - rightSide.y,
 		leftSide.z - rightSide.z
@@ -62,9 +56,8 @@ Vec3f operator-( Vec3f leftSide, Vec3f rightSide ) noexcept
 }
 
 constexpr
-Vec3f operator*( float scalar, Vec3f vector ) noexcept
-{
-	return Vec3f{ 
+Vec3f operator*( float scalar, Vec3f vector ) noexcept {
+	return Vec3f { 
 		scalar * vector.x, 
 		scalar * vector.y, 
 		scalar * vector.z
@@ -72,15 +65,13 @@ Vec3f operator*( float scalar, Vec3f vector ) noexcept
 }
 
 constexpr
-Vec3f operator*( Vec3f vector, float scalar ) noexcept
-{
+Vec3f operator*( Vec3f vector, float scalar ) noexcept {
 	return scalar * vector;
 }
 
 constexpr
-Vec3f operator/( Vec3f vector, float scalar ) noexcept
-{
-	return Vec3f{ 
+Vec3f operator/( Vec3f vector, float scalar ) noexcept {
+	return Vec3f {
 		vector.x / scalar,
 		vector.y / scalar,
 		vector.z / scalar
@@ -88,8 +79,7 @@ Vec3f operator/( Vec3f vector, float scalar ) noexcept
 }
 
 constexpr
-Vec3f& operator+=( Vec3f& leftSide, Vec3f rightSide ) noexcept
-{
+Vec3f& operator+=( Vec3f& leftSide, Vec3f rightSide ) noexcept {
 	leftSide.x += rightSide.x;
 	leftSide.y += rightSide.y;
 	leftSide.z += rightSide.z;
@@ -97,8 +87,7 @@ Vec3f& operator+=( Vec3f& leftSide, Vec3f rightSide ) noexcept
 }
 
 constexpr
-Vec3f& operator-=( Vec3f& leftSide, Vec3f rightSide ) noexcept
-{
+Vec3f& operator-=( Vec3f& leftSide, Vec3f rightSide ) noexcept {
 	leftSide.x -= rightSide.x;
 	leftSide.y -= rightSide.y;
 	leftSide.z -= rightSide.z;
@@ -106,8 +95,7 @@ Vec3f& operator-=( Vec3f& leftSide, Vec3f rightSide ) noexcept
 }
 
 constexpr
-Vec3f& operator*=( Vec3f& leftSide, float scalar ) noexcept
-{
+Vec3f& operator*=( Vec3f& leftSide, float scalar ) noexcept {
 	leftSide.x *= scalar;
 	leftSide.y *= scalar;
 	leftSide.z *= scalar;
@@ -115,8 +103,7 @@ Vec3f& operator*=( Vec3f& leftSide, float scalar ) noexcept
 }
 
 constexpr
-Vec3f& operator/=( Vec3f& leftSide, float scalar ) noexcept
-{
+Vec3f& operator/=( Vec3f& leftSide, float scalar ) noexcept {
 	leftSide.x /= scalar;
 	leftSide.y /= scalar;
 	leftSide.z /= scalar;
@@ -126,24 +113,20 @@ Vec3f& operator/=( Vec3f& leftSide, float scalar ) noexcept
 
 // Functions:
 constexpr
-float dot( Vec3f leftSide, Vec3f rightSide ) noexcept
-{
+float dot( Vec3f leftSide, Vec3f rightSide ) noexcept {
 	return leftSide.x * rightSide.x 
 		+ leftSide.y * rightSide.y
-		+ leftSide.z * rightSide.z
-	;
+		+ leftSide.z * rightSide.z;
 }
 
 inline
-float length( Vec3f vector ) noexcept
-{
+float length( Vec3f vector ) noexcept {
 	return std::sqrt( dot( vector, vector ) );
 }
 
 inline
-Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept
-{
-	return Vec3f{
+Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept {
+	return Vec3f {
 		leftSide.y * rightSide.z - leftSide.z * rightSide.y,
 		leftSide.z * rightSide.x - leftSide.x * rightSide.z,
 		leftSide.x * rightSide.y - leftSide.y * rightSide.x
@@ -151,8 +134,7 @@ Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept
 }
 
 inline
-Vec3f normalize( Vec3f vector ) noexcept
-{
+Vec3f normalize( Vec3f vector ) noexcept {
 	if( vector.x == 0 && vector.y == 0 && vector.z == 0)
 		return vector;
 
@@ -161,9 +143,8 @@ Vec3f normalize( Vec3f vector ) noexcept
 }
 
 inline
-Vec3f clamp_vec(Vec3f vector, float min, float max) noexcept
-{
-	return Vec3f{
+Vec3f clamp_vec(Vec3f vector, float min, float max) noexcept {
+	return Vec3f {
 		clamp(vector.x, min, max),
 		clamp(vector.y, min, max),
 		clamp(vector.z, min, max)
@@ -172,18 +153,25 @@ Vec3f clamp_vec(Vec3f vector, float min, float max) noexcept
 
 // Linear interpolation between two vectors
 inline
-Vec3f lerp(Vec3f vector1, Vec3f vector2, float weight) noexcept
-{
+Vec3f lerp(Vec3f vector1, Vec3f vector2, float weight) noexcept {
 	return vector1 + weight * (vector2 - vector1);
 }
 
 // Spherical linear interpolation between two vectors
 inline
-Vec3f slerp(Vec3f vector1, Vec3f vector2, float weight) noexcept
-{
+Vec3f slerp(Vec3f vector1, Vec3f vector2, float weight) noexcept {
 	float V1dotV2 = clamp(dot(vector1, vector2), -1.f, 1.f);
 	//V1dotV2 = clamp(V1dotV2, -1, 1);
 	float theta = std::acos(V1dotV2) * weight;
 	Vec3f RelativeVec = normalize(vector2 - vector1 * V1dotV2);
 	return (vector1 * std::cos(theta)) + (RelativeVec * std::sin(theta));
+}
+
+inline
+Vec3f rgb_to_linear(Vec3f color) noexcept {
+	return Vec3f {
+		color.x / 255.f,
+		color.y / 255.f,
+		color.z / 255.f
+	};
 }

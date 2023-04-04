@@ -1,11 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include <cstdlib>
-
 #include "Model.hpp"
-
 
 /**
 * @brief Creates a cone mesh made of triangles with vertices, normals and material.
@@ -16,4 +11,4 @@
 * 
 * @return The cone's mesh object.
 */
-Model make_cone(std::size_t subdivs = 16, Vec3f color = { 1.f, 1.f, 1.f }, Mat44f transformMatrix = Identity44f);
+Model generate_cone(std::size_t subdivs = 16, Material material = {}, Mat44f transformMatrix = Identity44f);

@@ -31,46 +31,23 @@ void Boid::updateDirection(float speed, float transition) {
 		this->currentDirection = normalize(lerp(this->currentDirection, this->targetDirection, transition));
 	}
 	this->currentPosition += this->currentDirection * speed;
-	
-	// If out of simulation bounds teleport to the opposite side
-	//if (this->currentPosition.x < X_MIN) {
-	//	this->currentPosition.x += X_RANGE;
-	//}
-	//else if (this->currentPosition.x > X_MAX) {
-	//	this->currentPosition.x -= X_RANGE;
-	//}
-
-	//if (this->currentPosition.y < Y_MIN) {
-	//	this->currentPosition.y += Y_RANGE;
-	//}
-	//else if (this->currentPosition.y > Y_MAX) {
-	//	this->currentPosition.y -= Y_RANGE;
-	//}
-
-	//if (this->currentPosition.z < Z_MIN) {
-	//	this->currentPosition.z += Z_RANGE;
-	//}
-	//else if (this->currentPosition.z > Z_MAX) {
-	//	this->currentPosition.z -= Z_RANGE;
-	//}
-
 	this->translationMatrix = make_translation(currentPosition);
 
 	// Update model2world
 	this->model2world = this->translationMatrix * this->rotationMatrix;
 }
 
-std::vector<Boid*> Boid::findNeighbours(std::vector<Boid*> totalBoids, float radius) {
+std::vector<Boid*> Boid::findNeighbours(std::vector<Boid*> totalBoids, float radius, float visionAngle) {
 	std::vector<Boid*> neighbours;
 	float distance;
 	for (auto b : totalBoids) {
 		Vec3f diff = b->currentPosition - this->currentPosition;
 		distance = length(diff);
 		if (distance > 0 && distance < radius) {
-			//float angle = acos(dot(this->currentDirection, diff));
-			//if (angle < 150.f) {
+			float angle = acos(dot(this->currentDirection, diff));
+			if (angle < visionAngle) {
 				neighbours.push_back(b);
-			//}
+			}
 		}
 	}
 	return neighbours;
@@ -131,24 +108,24 @@ Vec3f Boid::applySeparation(std::vector<Boid*> neighbours, float strength, float
 // turns back when reaching the edge of the simulation
 Vec3f Boid::avoidEdges(float strength) {
 	Vec3f direction = Vec3f{ 0.f, 0.f, 0.f };
-	if (this->currentPosition.x < X_MIN + EDGE_LIMIT) {
+	if (this->currentPosition.x < X_MIN) {
 		direction.x += 1.f;
 	}
-	else if (this->currentPosition.x > X_MAX - EDGE_LIMIT) {
+	else if (this->currentPosition.x > X_MAX) {
 		direction.x -= 1.f;
 	}
 
-	if (this->currentPosition.y < Y_MIN + EDGE_LIMIT) {
+	if (this->currentPosition.y < Y_MIN) {
 		direction.y += 1.f;
 	}
-	else if (this->currentPosition.y > Y_MAX - EDGE_LIMIT) {
+	else if (this->currentPosition.y > Y_MAX) {
 		direction.y -= 1.f;
 	}
 
-	if (this->currentPosition.z < Z_MIN + EDGE_LIMIT) {
+	if (this->currentPosition.z < Z_MIN) {
 		direction.z += 1.f;
 	}
-	else if (this->currentPosition.z > Z_MAX - EDGE_LIMIT) {
+	else if (this->currentPosition.z > Z_MAX) {
 		direction.z -= 1.f;
 	}
 	return direction * strength;

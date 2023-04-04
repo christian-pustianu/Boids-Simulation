@@ -1,6 +1,6 @@
 #include "Terrain.hpp"
 
-Model make_terrain(const char* heightmap, Vec3f color, Mat44f transformMatrix) {
+Model generate_terrain(const char* heightmap, Material material, Mat44f transformMatrix) {
     std::vector<Vertex> vertices;
     int width, height, nChannels;
     unsigned char* data = stbi_load(heightmap,
@@ -8,9 +8,6 @@ Model make_terrain(const char* heightmap, Vec3f color, Mat44f transformMatrix) {
         0);
 
     Mat33f const N = mat44_to_mat33(transpose(invert(transformMatrix)));
-
-    //printf("%d %d", width, height); //2726 1756
-    //printf("%s", data + (width-2 + width * (height-2)) * nChannels); //0
 
     for (unsigned int i = 0; i < width-1; i++) {
         for (unsigned int j = 0; j < height-1; j++) {
@@ -53,17 +50,24 @@ Model make_terrain(const char* heightmap, Vec3f color, Mat44f transformMatrix) {
     }
     stbi_image_free(data);
 
+    // Bottom of the terrain
+    vertices.emplace_back(Vertex{ Vec3f{ -width / 2.0f, 0.f, -height/ 2.0f}, { 0.f, -1.f, 0.f }, Vec2f{} });
+    vertices.emplace_back(Vertex{ Vec3f{ width / 2.0f, 0.f, -height / 2.0f}, { 0.f, -1.f, 0.f }, Vec2f{} });
+    vertices.emplace_back(Vertex{ Vec3f{ -width / 2.0f, 0.f, height / 2.0f}, { 0.f, -1.f, 0.f }, Vec2f{} });
+
+    vertices.emplace_back(Vertex{ Vec3f{ width / 2.0f, 0.f, -height / 2.0f}, { 0.f, -1.f, 0.f }, Vec2f{} });
+    vertices.emplace_back(Vertex{ Vec3f{ width / 2.0f, 0.f, height / 2.0f}, { 0.f, -1.f, 0.f }, Vec2f{} });
+    vertices.emplace_back(Vertex{ Vec3f{ -width / 2.0f, 0.f, height / 2.0f}, { 0.f, -1.f, 0.f }, Vec2f{} });
+
     for (auto& v : vertices) {
         Vec4f p4{ v.positions.x, v.positions.y, v.positions.z, 1.f };
         Vec4f t = transformMatrix * p4;
         t /= t.w;
 
-        v.positions = Vec3f{ t.x, 10.f*t.y, t.z };
+        v.positions = Vec3f{ t.x, t.y, t.z };
 
         v.normals = N * v.normals;
     }
 
-    Material material;
-    material.ambient = color;
     return Model(vertices, material);
 }

@@ -1,14 +1,13 @@
-#include "cone.hpp"
+#include "Cone.hpp"
 
-Model make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix) {
+Model generate_cone(std::size_t subdivs, Material material, Mat44f transformMatrix) {
 	std::vector<Vertex> vertices;
 
 	Mat33f const N = mat44_to_mat33(transpose(invert(transformMatrix)));
 
 	float prevY = std::cos(0.f);
 	float prevZ = std::sin(0.f);
-	for (std::size_t i = 0; i < subdivs; ++i)
-	{
+	for (std::size_t i = 0; i < subdivs; ++i) {
 		float const angle = (i + 1) / float(subdivs) * 2.f * 3.1415926f;
 
 		float y = std::cos(angle);
@@ -37,8 +36,6 @@ Model make_cone(std::size_t subdivs, Vec3f color, Mat44f transformMatrix) {
 		v.normals = N * v.normals;
 	}
 
-	Material material;
-	material.ambient = color;
 	return Model(vertices, material);
 }
 
