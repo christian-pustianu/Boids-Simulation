@@ -63,7 +63,9 @@ namespace {
     float alignmentStrength = 1.f;
     float separationStrength = 3.f;
 
-    unsigned int boid_camera = 0;
+    unsigned int boidToFollow = 0;
+    Vec3f thirdPersonDirection = { 0.f, 0.f, 0.f };
+
 
     bool technicalView = false;
     bool right_click = false;
@@ -226,6 +228,12 @@ int main() {
             boids.pop_back();
         }
 
+        if (boids.size() == 0 && camera.mode == THIRD_PERSON) {
+            camera.mode = LOCKED_ARC_BALL;
+            boidToFollow = 0;
+        }
+        else if(boidToFollow > boids.size()) boidToFollow = rand() % boids.size();
+
         // Set viewport to current window size
         int nwidth, nheight;
         glfwGetFramebufferSize(window, &nwidth, &nheight);
@@ -246,7 +254,7 @@ int main() {
         // CAMERA MOVEMENT
         float measurmentUnit = CAMERA_MOVEMENT * dt;
         // Update camera state
-        if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN) {
+        if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN || camera.mode == THIRD_PERSON) {
             if (camera.move.forward)
                 camera.position.z -= measurmentUnit;
             else if (camera.move.backwards)
@@ -290,9 +298,14 @@ int main() {
         }
         else if (camera.mode == THIRD_PERSON)
         {
-            //world2camera = look_at(boids.at(boid_camera)->currentDirection + Vec3f{0.f, 0.f, -5.f}, 
-            //    boids.at(boid_camera)->currentPosition,
-            //    {0.f, 1.f, 0.f});
+            // Translate camera to boid's current position
+            Mat44f T1 = make_translation(-boids.at(boidToFollow)->currentPosition);
+
+            // Rotate camera around the object and translate from/to it to zoom
+            Mat44f Rx = make_rotation_x(camera.rotation.y);
+            Mat44f Ry = make_rotation_y(camera.rotation.x);
+            Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
+            world2camera = T * Rx * Ry * T1;
         }
 
 
@@ -532,8 +545,10 @@ namespace
             else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
 				camera->mode = FlY_THROUGH;
             else if (GLFW_KEY_4 == key && GLFW_PRESS == action) {
-                boid_camera = rand() % boidsCount;
-				camera->mode = THIRD_PERSON;
+                if (boidsCount != 0) {
+                    boidToFollow = rand() % boidsCount;
+				    camera->mode = THIRD_PERSON;
+                }
             }
 
             // Camera controls if camera is active
@@ -594,8 +609,7 @@ namespace
         {
             if (camera->active)
             {
-                if (camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN)
-                {
+                if (camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN) {
                     // Lock the cursor on the middle of the screen
                     int nwidth, nheight;
                     glfwGetFramebufferSize(window, &nwidth, &nheight);
@@ -603,6 +617,21 @@ namespace
                     float dx = float(xPos) - float(nwidth / 2);
 
                     camera->rotation.x += dx * MOUSE_SENSITIVITY;
+                }
+                else if (camera->mode == THIRD_PERSON) {
+                    // Lock the cursor on the middle of the screen
+                    int nwidth, nheight;
+                    glfwGetFramebufferSize(window, &nwidth, &nheight);
+                    glfwSetCursorPos(window, float(nwidth / 2), float(nheight / 2));
+                    float dx = float(xPos) - float(nwidth / 2);
+                    float dy = float(yPos) - float(nheight / 2);
+
+                    camera->rotation.x += dx * MOUSE_SENSITIVITY;
+                    camera->rotation.y += dy * MOUSE_SENSITIVITY;
+                    if (camera->rotation.y > radians(90))
+                        camera->rotation.y = radians(90);
+                    else if (camera->rotation.y < radians(-90))
+                        camera->rotation.y = radians(-90);
                 }
                 else if (camera->mode == FlY_THROUGH)
                 {
