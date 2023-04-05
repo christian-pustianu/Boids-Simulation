@@ -77,7 +77,7 @@ namespace {
 
     struct CameraState {
         bool active;
-        struct move { bool forward, backwards, left, right, up, down; } move;
+        struct move { bool forward, backwards, left, right, up, down; float speed; } move;
 
         Vec2f rotation = { 0.f, 0.f };
         Vec3f position = { 0.f, 0.f, 150.f };
@@ -177,7 +177,7 @@ int main() {
     for (Vertex& v : terrain.vertices) {
         if (v.positions.y > maxHeight) maxHeight = v.positions.y;
     }
-    printf("%f\n", maxHeight * SIMULATION_SIZE.y);
+    maxHeight = maxHeight * SIMULATION_SIZE.y;
 
     //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
@@ -256,7 +256,7 @@ int main() {
         last = now;
 
         // CAMERA MOVEMENT
-        float measurmentUnit = CAMERA_MOVEMENT * dt;
+        float measurmentUnit = CAMERA_MOVEMENT * dt * camera.move.speed;
         // Update camera state
         if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN || camera.mode == THIRD_PERSON) {
             if (camera.move.forward)
@@ -362,24 +362,60 @@ int main() {
                 ImGui::Separator();
             }
             if (ImGui::CollapsingHeader("Camera controls (Instructions)", false)) {
-                ImGui::Columns(2, "My Columns");
-                ImGui::SetColumnWidth(0, 300);
+                ImGui::Columns(2, "col1");
+                ImGui::SetColumnWidth(0, 250);
                 ImGui::Text("Camera 1: Locked height ArcBall");
-                ImGui::Text("Camera 2: Top-Down View");
-                ImGui::Text("Camera 3: Fly-Through");
-                ImGui::Text("Camera 4: Third-Person");
-
+                ImGui::Text("Zoom in/out");
+                ImGui::Text("Rotate camera left/right");
 
                 ImGui::NextColumn();
-
-                ImGui::SetColumnWidth(1, 100);
                 ImGui::Text("PRESS [1]");
+                ImGui::Text("PRESS [W]/[S]");
+                ImGui::Text("MOVE MOUSE");
+                ImGui::Columns(1);
+                ImGui::Separator();
+
+                ImGui::Columns(2, "col2");
+                ImGui::SetColumnWidth(0, 250);
+                ImGui::Text("Camera 2: Top-Down View");
+                ImGui::Text("Zoom in/out");
+                ImGui::Text("Rotate camera left/right");
+
+                ImGui::NextColumn();
                 ImGui::Text("PRESS [2]");
+                ImGui::Text("PRESS [W]/[S]");
+                ImGui::Text("MOVE MOUSE");
+                ImGui::Columns(1);
+                ImGui::Separator();
+
+                ImGui::Columns(2, "col3");
+                ImGui::SetColumnWidth(0, 250);
+                ImGui::Text("Camera 3: Fly-Through");
+                ImGui::Text("Move forward/backwards");
+                ImGui::Text("Move left/right");
+                ImGui::Text("Move down/up");
+                ImGui::Text("Rotate camera left/right/up/down");
+
+                ImGui::NextColumn();
                 ImGui::Text("PRESS [3]");
+                ImGui::Text("PRESS [W]/[S]");
+                ImGui::Text("PRESS [A]/[D]");
+                ImGui::Text("PRESS [Q]/[E]");
+                ImGui::Text("MOVE MOUSE");
+                ImGui::Columns(1);
+                ImGui::Separator();
+
+                ImGui::Columns(2, "col4");
+                ImGui::SetColumnWidth(0, 250);
+                ImGui::Text("Camera 4: Third-Person");
+                ImGui::Text("Zoom in/out");
+                ImGui::Text("Rotate camera left/right/up/down");
+
+                ImGui::NextColumn();
                 ImGui::Text("PRESS [4]");
-
-                ImGui::Columns(1); // Don't forget to end the columns when you're done!
-
+                ImGui::Text("PRESS [W]/[S]");
+                ImGui::Text("MOVE MOUSE");
+                ImGui::Columns(1);
                 ImGui::Separator();
             }
             ImGui::Checkbox("Technical View", &technicalView);
@@ -418,7 +454,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Terrain position in world
-        terrain.model2world = make_translation({ 0.f, -6.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, SIMULATION_SIZE.y, SIMULATION_SIZE.z);
+        terrain.model2world = make_translation({ 0.f, -maxHeight, 0.f }) * make_scaling(SIMULATION_SIZE.x, SIMULATION_SIZE.y, SIMULATION_SIZE.z);
 
         // Simulation parameters
         float movementSpeed = dt * boidSpeed;
@@ -604,6 +640,13 @@ namespace {
 					else if (GLFW_RELEASE == action)
 						camera->move.down = false;
 				}
+
+                if (GLFW_MOD_SHIFT == mods)
+                    camera->move.speed = 2.5f;
+                else if (GLFW_MOD_CONTROL == mods)
+                    camera->move.speed = 0.2f;
+                else
+                    camera->move.speed = 1.f;
             }
         }
     }
