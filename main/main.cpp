@@ -68,7 +68,9 @@ namespace {
 
 
     bool technicalView = false;
-    bool right_click = false;
+    bool rightClick = false;
+    bool leftClick = false;
+    bool altMouse = false;
 
     // Pause switch for the simulation
     bool paused = true;
@@ -93,6 +95,7 @@ namespace {
     void error_callback(int, const char*);
     void key_callback(GLFWwindow*, int, int, int, int);
     void cursor_position_callback(GLFWwindow*, double, double);
+    void mouse_button_callback(GLFWwindow*, int, int, int);
 
     Vec3f targetLocation = { 0.f, 0.f, 0.f };
     Vec3f targetDirection = { 0.f, 0.f, 0.f };
@@ -138,6 +141,7 @@ int main() {
     glfwSetWindowUserPointer(window, &camera);
     glfwSetKeyCallback(window, &key_callback);
     glfwSetCursorPosCallback(window, &cursor_position_callback);
+    glfwSetMouseButtonCallback(window, &mouse_button_callback);
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -166,9 +170,9 @@ int main() {
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MMShader.data.shaderProgram };
 
     // Define objects
-    // Terrain scaled to a 1 unit size
     Material terrainMat = Material{ rgb_to_linear({ 172, 150, 83 }), rgb_to_linear({ 189, 171, 117 }), rgb_to_linear({ 205, 192, 152 })};
-    Model terrain = generate_terrain("assets/heightmap.png", terrainMat, make_translation({0.f, 0.f, 0.f}) * make_scaling(0.0078f, 0.0005f, 0.0078f));
+    // Terrain scaled to a 1 unit size
+    Model terrain = generate_terrain("assets/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f));
     float maxHeight = 0.f;
     for (Vertex& v : terrain.vertices) {
         if (v.positions.y > maxHeight) maxHeight = v.positions.y;
@@ -282,6 +286,8 @@ int main() {
         Mat44f world2camera = Identity44f;
         if (camera.mode == LOCKED_ARC_BALL) {
             Mat44f Rx = make_rotation_x(radians(30.f));
+            if (boidControl == POINT_GIVEN && !camera.active)
+                camera.rotation.x = 0.f;
             Mat44f Ry = make_rotation_y(camera.rotation.x);
             Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
             world2camera = T * Rx * Ry;
@@ -292,6 +298,8 @@ int main() {
         else if (camera.mode == TOP_DOWN)
         {
             Mat44f Rx = make_rotation_x(radians(90.f));
+            if (boidControl == POINT_GIVEN && !camera.active)
+                camera.rotation.x = 0.f;
             Mat44f Ry = make_rotation_y(camera.rotation.x);
             Mat44f T = make_translation({ 0.f, 0.f, -camera.position.z });
             world2camera = T * Rx * Ry;
@@ -379,11 +387,24 @@ int main() {
             ImGui::SameLine();
             if (ImGui::Button("Go in direction")) { boidControl = DIRECTION_GIVEN; targetDirection = { 1.f, 0.f, 0.f }; }
             ImGui::SameLine();
-            if (ImGui::Button("Go to point")) boidControl = POINT_GIVEN;
+            if (ImGui::Button("Go to point")) {
+                boidControl = POINT_GIVEN;
+                if (camera.mode == THIRD_PERSON || camera.mode == FlY_THROUGH) {
+                    camera.mode = LOCKED_ARC_BALL;
+                    camera.position.z = 150.f;
+                }
+            }
             if (boidControl == POINT_GIVEN) {
+                ImGui::Text("Camera Locked while controlling the target point!");
+                ImGui::Text("To move the target point, use these sliders or:");
+                ImGui::Text("Hold [LEFT CLICK] to move it on the Y axis.");
+                ImGui::Text("Hold [RIGHT CLICK] to move on the XZ plane.");
                 ImGui::SliderFloat("Point X", &targetLocation.x, -SIMULATION_SIZE.x, SIMULATION_SIZE.x);
                 ImGui::SliderFloat("Point Y", &targetLocation.y, 0.f, SIMULATION_SIZE.y);
                 ImGui::SliderFloat("Point Z", &targetLocation.z, -SIMULATION_SIZE.z, SIMULATION_SIZE.z);
+                if (ImGui::Button("Default target (Origin)")) {
+                    targetLocation = { 0.f, 0.f, 0.f };
+                }
             }
             else if (boidControl == DIRECTION_GIVEN) {
                 ImGui::SliderFloat("Direction X", &targetDirection.x, -1.f, 1.f );
@@ -397,7 +418,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Terrain position in world
-        terrain.model2world = make_translation({ 0.f, -1.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, SIMULATION_SIZE.y, SIMULATION_SIZE.z);
+        terrain.model2world = make_translation({ 0.f, -6.f, 0.f }) * make_scaling(SIMULATION_SIZE.x, SIMULATION_SIZE.y, SIMULATION_SIZE.z);
 
         // Simulation parameters
         float movementSpeed = dt * boidSpeed;
@@ -495,40 +516,24 @@ int main() {
 
 
 // Setup for GLFW callbacks
-namespace
-{
-    void error_callback(int code, const char* description)
-    {
+namespace {
+    void error_callback(int code, const char* description) {
         std::fprintf(stderr, "GLFW error: %s (%d)\n", description, code);
     }
 
-    void key_callback(GLFWwindow* window, int key, int, int action, int mods)
-    {
-        if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action)
-        {
+    void key_callback(GLFWwindow* window, int key, int, int action, int mods) {
+        if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action) {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
             return;
         }
 
-        if (GLFW_KEY_SPACE == key && GLFW_PRESS == action)
-        {
+        if (GLFW_KEY_SPACE == key && GLFW_PRESS == action) {
             paused = !paused;
         }
 
-        if (GLFW_MOUSE_BUTTON_RIGHT == key)
-        {
-            if (GLFW_PRESS == action)
-                right_click = true;
-            else if (GLFW_RELEASE == action)
-                right_click = false;
-        }
-
-        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window)))
-        {
-
+        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
             // Space toggles camera
-            if (GLFW_KEY_C == key && GLFW_PRESS == action)
-            {
+            if (GLFW_KEY_C == key && GLFW_PRESS == action) {
                 camera->active = !camera->active;
 
                 if (camera->active)
@@ -538,62 +543,62 @@ namespace
             }
 
             // Camera mode
-            if (GLFW_KEY_1 == key && GLFW_PRESS == action)
+            if (GLFW_KEY_1 == key && GLFW_PRESS == action) {
 				camera->mode = LOCKED_ARC_BALL;
-			else if (GLFW_KEY_2 == key && GLFW_PRESS == action)
+                camera->position.z = 150.f;
+            }
+            else if (GLFW_KEY_2 == key && GLFW_PRESS == action) {
 				camera->mode = TOP_DOWN;
-            else if (GLFW_KEY_3 == key && GLFW_PRESS == action)
+                camera->position.z = 150.f;
+            }
+            else if (GLFW_KEY_3 == key && GLFW_PRESS == action) {
 				camera->mode = FlY_THROUGH;
+                camera->position = { 0.f, 25.f, 150.f};
+            }
             else if (GLFW_KEY_4 == key && GLFW_PRESS == action) {
                 if (boidsCount != 0) {
                     boidToFollow = rand() % boidsCount;
 				    camera->mode = THIRD_PERSON;
+                    camera->position.z = 10.f;
                 }
             }
 
             // Camera controls if camera is active
-            if (camera->active)
-            {
+            if (camera->active) {
                 // Movement controls
-                if (GLFW_KEY_A == key)
-                {
+                if (GLFW_KEY_A == key) {
 					if (GLFW_PRESS == action)
 						camera->move.left = true;
 					else if (GLFW_RELEASE == action)
 						camera->move.left = false;
 				}
-                else if (GLFW_KEY_D == key)
-                {
+                else if (GLFW_KEY_D == key) {
 					if (GLFW_PRESS == action)
 						camera->move.right = true;
 					else if (GLFW_RELEASE == action)
 						camera->move.right = false;
 				}
 
-                if (GLFW_KEY_W == key)
-                {
+                if (GLFW_KEY_W == key) {
                     if (GLFW_PRESS == action)
                         camera->move.forward = true;
                     else if (GLFW_RELEASE == action)
                         camera->move.forward = false;
                 }
-                else if (GLFW_KEY_S == key)
-                {
+                else if (GLFW_KEY_S == key) {
                     if (GLFW_PRESS == action)
                         camera->move.backwards = true;
                     else if (GLFW_RELEASE == action)
                         camera->move.backwards = false;
                 }
 
-                if (GLFW_KEY_E == key)
-                {
+                if (GLFW_KEY_E == key) {
 					if (GLFW_PRESS == action)
 						camera->move.up = true;
 					else if (GLFW_RELEASE == action)
 						camera->move.up = false;
 				}
-                else if (GLFW_KEY_Q == key)
-                {
+                else if (GLFW_KEY_Q == key) {
 					if (GLFW_PRESS == action)
 						camera->move.down = true;
 					else if (GLFW_RELEASE == action)
@@ -603,12 +608,29 @@ namespace
         }
     }
 
+    void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
+            if (!camera->active && boidControl == POINT_GIVEN) {
+                if (GLFW_MOUSE_BUTTON_RIGHT == button) {
+                    if (GLFW_PRESS == action)
+                        rightClick = true;
+                    else if (GLFW_RELEASE == action)
+                        rightClick = false;
+                }
+                else if (GLFW_MOUSE_BUTTON_LEFT == button) {
+                    if (GLFW_PRESS == action)
+                        leftClick = true;
+                    else if (GLFW_RELEASE == action)
+                        leftClick = false;
+                }
+			}
+		}
+	}
+
     void cursor_position_callback(GLFWwindow* window, double xPos, double yPos)
     {
-        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window)))
-        {
-            if (camera->active)
-            {
+        if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
+            if (camera->active) {
                 if (camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN) {
                     // Lock the cursor on the middle of the screen
                     int nwidth, nheight;
@@ -660,19 +682,32 @@ namespace
                     camera->front = normalize(front);
                 }
             }
-            else
-            {
-                // if right click is pressed, change targetLocation on XZ plane
-                if (right_click)
-                {
-                    printf("Hello\n");
-                    int nwidth, nheight;
-					glfwGetFramebufferSize(window, &nwidth, &nheight);
-					float x = float(xPos) / float(nwidth);
-					float y = float(yPos) / float(nheight);
-					targetLocation.x = x * 2.f - 1.f;
-					targetLocation.z = y * 2.f - 1.f;
-                }
+            else {
+                if(camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN)
+                    // If right click is pressed, change targetLocation on XZ plane
+                    if (rightClick) {
+                        int nwidth, nheight;
+					    glfwGetFramebufferSize(window, &nwidth, &nheight);
+					    float x = float(xPos) / float(nwidth);
+					    float y = float(yPos) / float(nheight);
+					    targetLocation.x = x * 400.f - 200.f;
+					    targetLocation.z = y * 400.f - 200.f;
+
+                        if (targetLocation.x > 200.f) targetLocation.x = 200.f;
+                        else if (targetLocation.x < -200.f) targetLocation.x = -200.f;
+                
+                        if (targetLocation.z > 200.f) targetLocation.z = 200.f;
+                        else if (targetLocation.z < -200.f) targetLocation.z = -200.f;
+                    }
+                    // If left click is pressed, change targetLocation on Y axis
+                    else if (leftClick) {
+                        int nwidth, nheight;
+                        glfwGetFramebufferSize(window, &nwidth, &nheight);
+                        float y = float(yPos) / float(nheight);
+                        targetLocation.y = y * -50.f + 50.f;
+                        if (targetLocation.y > 50.f) targetLocation.y = 50.f;
+                        else if (targetLocation.y < 0.f) targetLocation.y = 0.f;
+                    }
             }
         }
     }

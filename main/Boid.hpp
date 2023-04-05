@@ -14,7 +14,7 @@ constexpr float X_MIN = -100.f + EDGE_LIMIT;
 constexpr float X_MAX = 100.f - EDGE_LIMIT;
 constexpr float X_RANGE = X_MAX - X_MIN;
 
-constexpr float Y_MIN = 6.f + EDGE_LIMIT;
+constexpr float Y_MIN = 0.f + EDGE_LIMIT;
 constexpr float Y_MAX = 50.f - EDGE_LIMIT;
 constexpr float Y_RANGE = Y_MAX - Y_MIN;
 
