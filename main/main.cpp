@@ -21,7 +21,6 @@
 #include "../math/mat44.hpp"
 #include "../math/other.hpp"
 
-#include <omp.h>
 
 extern "C"  {
     // Force the use of the NVIDIA GPU on laptops with switchable graphics
@@ -67,7 +66,7 @@ namespace {
     Vec3f thirdPersonDirection = { 0.f, 0.f, 0.f };
 
 
-    bool technicalView = false;
+    bool technicalView = true;
     bool rightClick = false;
     bool leftClick = false;
     bool altMouse = false;
@@ -166,11 +165,13 @@ int main() {
     
     // Set up shaders
     Shader SimpleShader = Shader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
-    Shader MMShader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
-    GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MMShader.data.shaderProgram };
+    Shader MultiMaterialShader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
+    GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MultiMaterialShader.data.shaderProgram };
 
+
+    Model water = Model(load_wavefront_obj("assets/models/water.obj"));
     // Define objects
-    Material terrainMat = Material{ rgb_to_linear({ 172, 150, 83 }), rgb_to_linear({ 189, 171, 117 }), rgb_to_linear({ 205, 192, 152 })};
+    Material terrainMat = Material{ rgb_to_linear(Vec3f{ 172, 150, 83 }), rgb_to_linear(Vec3f{ 189, 171, 117 }), rgb_to_linear(Vec3f{ 205, 192, 152 })};
     // Terrain scaled to a 1 unit size
     Model terrain = generate_terrain("assets/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f));
     float maxHeight = 0.f;
@@ -179,19 +180,43 @@ int main() {
     }
     maxHeight = maxHeight * SIMULATION_SIZE.y;
 
-    //Model column = Model(load_wavefront_obj("assets/models/column.obj"));
 
+    // Obstacles
     Model box = Model(load_wavefront_obj("assets/models/box.obj"));
-
     Model sphere = Model(load_wavefront_obj("assets/models/sphere.obj"));
+    Model columns = Model(load_wavefront_obj("assets/models/AllColumns.obj"));
+    Model rocks = Model(load_wavefront_obj("assets/models/AllRocks.obj"));
 
     std::vector<Obstacle*> obstacles;
-    //obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 0.f, 0.f}, 1.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{0.f, 25.f, 0.f}, 1.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_SIZE.x, 25.f, SIMULATION_SIZE.z }, 10.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, SIMULATION_SIZE.z }, 10.f));
-    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -SIMULATION_SIZE.x, 25.f, -SIMULATION_SIZE.z }, 10.f));
+
+    // Columns on left side
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 18.f, 5.f }, Vec3f{ 4.f, 24.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 18.f, -25.f }, Vec3f{ 4.f, 24.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 18.f, -55.f }, Vec3f{ 4.f, 24.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 42.6f, -24.f }, Vec3f{ 4.f, 2.f, 38.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 0.f, 35.f }, Vec3f{ 4.f, 5.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 4.f, 57.f }, Vec3f{ 4.f, 8.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 0.1f, 49.9f }, Vec3f{ 4.f, 4.6f, 3.1f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -9.f, -3.f, 44.f }, Vec3f{ 3.5f, 3.f, 12.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -15.2f, 18.f, 65.f }, Vec3f{ 4.f, 24.f, 4.f }));
+
+    // Columns on right side
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ 67.5f, 18.f, -55.f }, Vec3f{ 4.f, 24.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ 46.f, -2.5f, -26.f }, Vec3f{ 26.f, 4.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ 67.5f, 7.6f, 5.f }, Vec3f{ 4.f, 13.5f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ 67.5f, 18.f, 35.f }, Vec3f{ 4.f, 24.f, 4.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ 67.5f, 42.6f, 48.f }, Vec3f{ 4.f, 2.f, 23.f }));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ 67.5f, 17.f, 65.f }, Vec3f{ 4.f, 24.f, 4.f }));
+
+    // statue in the middle
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ 26.5f, 1.f, -56.f }, 9.f));
+    
+    // rocks
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -60.f, -8.f, -58.f }, 35.f));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -62.8f, 2.4f, -20.f }, Vec3f{ 7.f, 9.f, 10.f }));
+    obstacles.push_back(new SphereObstacle(&sphere, Vec3f{ -68.f, -8.7f, 40.f }, 29.f));
+    obstacles.push_back(new BoxObstacle(&box, Vec3f{ -60.9f, -2.3f, 10.f }, Vec3f{ 9.3f, 3.7f, 7.f }));
+
 
 
     Model fish = load_wavefront_obj("assets/models/fish.obj");
@@ -496,7 +521,13 @@ int main() {
         }
 
         // Render terrain with specified shader
+        if(technicalView)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         terrain.render(camera.position, world2projection, terrain.model2world, shadersInUse);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        columns.render(camera.position, world2projection, columns.model2world, shadersInUse);
+        rocks.render(camera.position, world2projection, rocks.model2world, shadersInUse);
 
         if(boidControl == POINT_GIVEN)
         //Location point for directed movement
@@ -507,11 +538,14 @@ int main() {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Draw blended objects
+        //water.render(camera.position, world2projection, terrain.model2world, shadersInUse);
 
-        // Render obstacles
-        for (auto obstacle : obstacles) {
-            obstacle->model->render(camera.position, world2projection, obstacle->model2world, shadersInUse);
-		}
+        // Render obstacle outlines
+        if(technicalView)
+            for (auto obstacle : obstacles) {
+                if(obstacle->model)
+                    obstacle->model->render(camera.position, world2projection, obstacle->model2world, shadersInUse);
+		    }
 
         glDisable(GL_BLEND); 
 
@@ -565,6 +599,10 @@ namespace {
 
         if (GLFW_KEY_SPACE == key && GLFW_PRESS == action) {
             paused = !paused;
+        }
+
+        if (GLFW_KEY_T == key && GLFW_PRESS == action) {
+            technicalView = !technicalView;
         }
 
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
@@ -733,14 +771,14 @@ namespace {
 					    glfwGetFramebufferSize(window, &nwidth, &nheight);
 					    float x = float(xPos) / float(nwidth);
 					    float y = float(yPos) / float(nheight);
-					    targetLocation.x = x * 400.f - 200.f;
-					    targetLocation.z = y * 400.f - 200.f;
+					    targetLocation.x = x * 2 * SIMULATION_SIZE.x - SIMULATION_SIZE.x;
+					    targetLocation.z = y * 2 * SIMULATION_SIZE.z - SIMULATION_SIZE.z;
 
-                        if (targetLocation.x > 200.f) targetLocation.x = 200.f;
-                        else if (targetLocation.x < -200.f) targetLocation.x = -200.f;
+                        if (targetLocation.x > SIMULATION_SIZE.x) targetLocation.x = SIMULATION_SIZE.x;
+                        else if (targetLocation.x < -SIMULATION_SIZE.x) targetLocation.x = -SIMULATION_SIZE.x;
                 
-                        if (targetLocation.z > 200.f) targetLocation.z = 200.f;
-                        else if (targetLocation.z < -200.f) targetLocation.z = -200.f;
+                        if (targetLocation.z > SIMULATION_SIZE.z) targetLocation.z = SIMULATION_SIZE.z;
+                        else if (targetLocation.z < -SIMULATION_SIZE.z) targetLocation.z = -SIMULATION_SIZE.z;
                     }
                     // If left click is pressed, change targetLocation on Y axis
                     else if (leftClick) {

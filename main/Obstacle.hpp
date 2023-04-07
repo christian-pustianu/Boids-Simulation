@@ -35,23 +35,23 @@ public:
 	};
 };
 
-//class BoxObstacle : public Obstacle
-//{
-//private:
-//	Vec3f size; // size of the box from origin
-//	Vec3f corner1;
-//	Vec3f corner2;
-//public:
-//	BoxObstacle(Model* model, Vec3f position, Vec3f size) : Obstacle(model, position) {
-//		this->size = size;
-//		this->model2world = make_translation(position) * make_scaling(size.x, size.y, size.z);
-//		this->corner1 = this->position - this->size / 2.f - Vec3f{ 2.f, 2.f, 2.f };
-//		this->corner2 = this->position + this->size / 2.f + Vec3f{ 2.f, 2.f, 2.f };
-//	}
-//
-//	bool isColliding(Vec3f position) override {
-//		return position.x >= this->corner1.x && position.x <= this->corner2.x &&
-//			position.y >= this->corner1.y && position.y <= this->corner2.y &&
-//			position.z >= this->corner1.z && position.z <= this->corner2.z;
-//	}
-//};
+class BoxObstacle : public Obstacle
+{
+private:
+	Vec3f size; // size of the box from origin
+	Vec3f corner1;
+	Vec3f corner2;
+public:
+	BoxObstacle(Model* model, Vec3f position, Vec3f size) : Obstacle(model, position) {
+		this->size = size;
+		this->model2world = make_translation(position) * make_scaling(size.x, size.y, size.z);
+		this->corner1 = this->position - this->size - Vec3f{ 5.f, 5.f, 5.f };
+		this->corner2 = this->position + this->size + Vec3f{ 5.f, 5.f, 5.f };
+	}
+
+	bool isColliding(Vec3f position) override {
+		return position.x >= this->corner1.x && position.x <= this->corner2.x &&
+			position.y >= this->corner1.y && position.y <= this->corner2.y &&
+			position.z >= this->corner1.z && position.z <= this->corner2.z;
+	}
+};
