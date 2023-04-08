@@ -35,6 +35,16 @@ struct Material {
 };
 
 /**
+* @brief A light struct containing the parameters of the light used in the Blinn-Phong model.
+*/
+struct Light {
+	Vec3f position;
+	Vec3f ambient;
+	Vec3f color;
+	float strength;
+};
+
+/**
 * @brief Representation of a 3D model.
 */
 class Model {
@@ -101,5 +111,5 @@ public:
 	*
 	* @return void
 	*/
-	void render(Vec3f, Mat44f, Mat44f, GLuint[]);
+	void render(Vec3f, Light, Mat44f, Mat44f, GLuint[]);
 };

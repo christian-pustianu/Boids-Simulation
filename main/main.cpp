@@ -65,8 +65,14 @@ namespace {
     unsigned int boidToFollow = 0;
     Vec3f thirdPersonDirection = { 0.f, 0.f, 0.f };
 
+    Light light = {
+        { 0.f, 100.f, 0.f }, // position
+        { 0.1f, 0.1f, 0.1f }, // ambient
+        { 0.50980f, 0.88235f, 0.89020f }, // color (sunlight sRGB 0-1.0)
+        10000.f // strength
+    };
 
-    bool technicalView = true;
+    bool technicalView = false;
     bool rightClick = false;
     bool leftClick = false;
     bool altMouse = false;
@@ -164,6 +170,9 @@ int main() {
     auto last = std::chrono::steady_clock::now();
     
     // Set up shaders
+    Shader CubeMapShader = Shader("assets/shaders/CubeMap.vert", "assets/shaders/CubeMap.frag");
+    const char* faces[6] = { "right.png", "left.png", "top.png", "bottom.png", "front.png", "back.png" };
+
     Shader SimpleShader = Shader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
     Shader MultiMaterialShader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MultiMaterialShader.data.shaderProgram };
@@ -173,7 +182,7 @@ int main() {
     // Define objects
     Material terrainMat = Material{ rgb_to_linear(Vec3f{ 172, 150, 83 }), rgb_to_linear(Vec3f{ 189, 171, 117 }), rgb_to_linear(Vec3f{ 205, 192, 152 })};
     // Terrain scaled to a 1 unit size
-    Model terrain = generate_terrain("assets/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f));
+    Model terrain = generate_terrain("assets/textures/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f));
     float maxHeight = 0.f;
     for (Vertex& v : terrain.vertices) {
         if (v.positions.y > maxHeight) maxHeight = v.positions.y;
@@ -514,48 +523,44 @@ int main() {
             // Instanced rendering of boid_model for every boid created
             if (!technicalView) {
                 Mat44f animation = make_shear_x(0.f, tailAngle);
-                fish.render(camera.position, world2projection, boid->model2world*animation, shadersInUse);
+                fish.render(camera.position, light, world2projection, boid->model2world*animation, shadersInUse);
             }
             else
-                cone.render(camera.position, world2projection, boid->model2world, shadersInUse);
+                cone.render(camera.position, light, world2projection, boid->model2world, shadersInUse);
         }
 
         // Render terrain with specified shader
         if(technicalView)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        terrain.render(camera.position, world2projection, terrain.model2world, shadersInUse);
+        terrain.render(camera.position, light, world2projection, terrain.model2world, shadersInUse);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        columns.render(camera.position, world2projection, columns.model2world, shadersInUse);
-        rocks.render(camera.position, world2projection, rocks.model2world, shadersInUse);
+        columns.render(camera.position, light, world2projection, columns.model2world, shadersInUse);
+        rocks.render(camera.position, light, world2projection, rocks.model2world, shadersInUse);
 
-        if(boidControl == POINT_GIVEN)
         //Location point for directed movement
-            sphere.render(camera.position, world2projection, make_translation(targetLocation), shadersInUse);
-        
-        // Enable alpha blending
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if(boidControl == POINT_GIVEN)
+            sphere.render(camera.position, light, world2projection, make_translation(targetLocation), shadersInUse);
 
         // Draw blended objects
         //water.render(camera.position, world2projection, terrain.model2world, shadersInUse);
 
         // Render obstacle outlines
-        if(technicalView)
+        if (technicalView) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             for (auto obstacle : obstacles) {
                 if(obstacle->model)
-                    obstacle->model->render(camera.position, world2projection, obstacle->model2world, shadersInUse);
+                    obstacle->model->render(camera.position, light, world2projection, obstacle->model2world, shadersInUse);
 		    }
-
-        glDisable(GL_BLEND); 
+            glDisable(GL_BLEND);
+        }
 
         glBindVertexArray(0);
         glUseProgram(0);
 
-
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 
         GLenum gl_error = glGetError();
         if (gl_error != GL_NO_ERROR) {

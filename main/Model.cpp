@@ -69,7 +69,7 @@ void Model::setupRendering()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Model::render(Vec3f cameraPosition, Mat44f world2projection, Mat44f model2world, GLuint shaderProgs[])
+void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, Mat44f model2world, GLuint shaderProgs[])
 {
     GLuint shaderProg;
     if (materials.size() == 1)
@@ -103,23 +103,17 @@ void Model::render(Vec3f cameraPosition, Mat44f world2projection, Mat44f model2w
 
     glUniform3f(2, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-    // Lights
-    Vec3f lightPosition = { 100.f, 200.f, -100.f };
-    Vec3f ambientLight = { 0.2f, 0.2f, 0.2f };
-    Vec3f lightColor = { 0.99216f, 0.98431f, 0.82745f }; // color of the sunlight
-    float lightStrength = 10000.f;
-
     loc = glGetUniformLocation(shaderProg, "light.Position");
-    glUniform3f(loc, lightPosition.x, lightPosition.y, lightPosition.z);
+    glUniform3f(loc, light.position.x, light.position.y, light.position.z);
 
     loc = glGetUniformLocation(shaderProg, "light.Ambient");
-    glUniform3f(loc, ambientLight.x, ambientLight.y, ambientLight.z);
+    glUniform3f(loc, light.ambient.x, light.ambient.y, light.ambient.z);
 
     loc = glGetUniformLocation(shaderProg, "light.Color");
-    glUniform3f(loc, lightColor.x, lightColor.y, lightColor.z);
+    glUniform3f(loc, light.color.x, light.color.y, light.color.z);
 
     loc = glGetUniformLocation(shaderProg, "light.Strength");
-    glUniform1f(loc, lightStrength);
+    glUniform1f(loc, light.strength);
 
     glBindVertexArray(this->VAO);
     glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());
