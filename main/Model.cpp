@@ -84,7 +84,6 @@ void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, M
         1, GL_TRUE, world2projection.v
     );
 
-    GLuint loc;
 
     // material properties
     for (int i = 0; i < materials.size(); i++) {
@@ -103,6 +102,7 @@ void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, M
 
     glUniform3f(2, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
+    GLuint loc;
     loc = glGetUniformLocation(shaderProg, "light.Position");
     glUniform3f(loc, light.position.x, light.position.y, light.position.z);
 

@@ -3,7 +3,7 @@
 Model generate_cone(std::size_t subdivs, Material material, Mat44f transformMatrix) {
 	std::vector<Vertex> vertices;
 
-	Mat33f const N = mat44_to_mat33(transpose(invert(transformMatrix)));
+	Mat33f const N = mat33(transpose(invert(transformMatrix)));
 
 	float prevY = std::cos(0.f);
 	float prevZ = std::sin(0.f);

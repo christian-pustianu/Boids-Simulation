@@ -53,13 +53,25 @@ Vec3f operator*( Mat33f const& leftSide, Vec3f const& rightSide ) noexcept
 
 // Functions:
 inline
-Mat33f mat44_to_mat33( Mat44f const& Matrix )
+Mat33f mat33( Mat44f const& Matrix )
 {
 	Mat33f result{};
 	for( std::size_t i = 0; i < 3; ++i )
 	{
 		for( std::size_t j = 0; j < 3; ++j )
 			result(i,j) = Matrix(i,j);
+	}
+	return result;
+}
+
+inline
+Mat44f mat44(Mat33f const& Matrix)
+{
+	Mat44f result{};
+	for (std::size_t i = 0; i < 3; ++i)
+	{
+		for (std::size_t j = 0; j < 3; ++j)
+			result(i, j) = Matrix(i, j);
 	}
 	return result;
 }

@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <chrono>
 
+#include "CubeMap.hpp"
 #include "Shader.hpp"
 #include "Model.hpp"
 #include "Boid.hpp"
@@ -72,10 +73,10 @@ namespace {
         10000.f // strength
     };
 
+    bool showGUI = true;
     bool technicalView = false;
     bool rightClick = false;
     bool leftClick = false;
-    bool altMouse = false;
 
     // Pause switch for the simulation
     bool paused = true;
@@ -169,16 +170,23 @@ int main() {
     // Initialize time for animations
     auto last = std::chrono::steady_clock::now();
     
-    // Set up shaders
-    Shader CubeMapShader = Shader("assets/shaders/CubeMap.vert", "assets/shaders/CubeMap.frag");
-    const char* faces[6] = { "right.png", "left.png", "top.png", "bottom.png", "front.png", "back.png" };
+    // Set up shader for the skybox
+    Shader CubeMapShader("assets/shaders/CubeMap.vert", "assets/shaders/CubeMap.frag");
+    const char* faces[6] = { "assets/textures/right.jpg",
+                            "assets/textures/left.jpg",
+                            "assets/textures/top.jpg",
+                            "assets/textures/bottom.jpg",
+                            "assets/textures/front.jpg",
+                            "assets/textures/back.jpg" };
+    CubeMap cubemap(faces);
 
-    Shader SimpleShader = Shader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
-    Shader MultiMaterialShader = Shader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
+    // Set up shaders for model rendering
+    Shader SimpleShader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
+    Shader MultiMaterialShader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MultiMaterialShader.data.shaderProgram };
 
 
-    Model water = Model(load_wavefront_obj("assets/models/water.obj"));
+    Model water = load_wavefront_obj("assets/models/water.obj");
     // Define objects
     Material terrainMat = Material{ rgb_to_linear(Vec3f{ 172, 150, 83 }), rgb_to_linear(Vec3f{ 189, 171, 117 }), rgb_to_linear(Vec3f{ 205, 192, 152 })};
     // Terrain scaled to a 1 unit size
@@ -494,7 +502,6 @@ int main() {
         float movementSpeed = dt * boidSpeed;
         float turnSharpness = movementSpeed * 0.2f;
 
-
         if (!technicalView && !paused) {
             tailAngle += tailSpeed;
             if (tailAngle >= 0.2f || tailAngle <= -0.2f) tailSpeed = -tailSpeed;
@@ -556,11 +563,17 @@ int main() {
             glDisable(GL_BLEND);
         }
 
+        if (!technicalView)
+            cubemap.render(projection, world2camera, CubeMapShader.data.shaderProgram);
+
         glBindVertexArray(0);
         glUseProgram(0);
 
         ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        
+        if (showGUI) {
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
 
         GLenum gl_error = glGetError();
         if (gl_error != GL_NO_ERROR) {
@@ -608,6 +621,10 @@ namespace {
 
         if (GLFW_KEY_T == key && GLFW_PRESS == action) {
             technicalView = !technicalView;
+        }
+
+        if (GLFW_KEY_G == key && GLFW_PRESS == action) {
+            showGUI = !showGUI;
         }
 
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
