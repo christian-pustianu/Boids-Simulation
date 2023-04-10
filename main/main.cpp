@@ -57,7 +57,7 @@ namespace {
     float boidVisionRange = 12.f;
     float boidVisionAngle = 150.f;
 
-    int boidsCount = 500;
+    int boidsCount = 1000;
 
     float cohesionStrength = 1.f;
     float alignmentStrength = 1.f;
@@ -276,9 +276,10 @@ int main() {
 
         if (boids.size() == 0 && camera.mode == THIRD_PERSON) {
             camera.mode = LOCKED_ARC_BALL;
+            camera.position.z = 150.f;
             boidToFollow = 0;
         }
-        else if(boidToFollow > boids.size()) boidToFollow = rand() % boids.size();
+        else if(boids.size() > 0 && boidToFollow > boids.size()) boidToFollow = 0;
 
         // Set viewport to current window size
         int nwidth, nheight;
@@ -383,7 +384,7 @@ int main() {
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::Checkbox("Pause - PRESS [SPACE]", &paused);
             if (ImGui::CollapsingHeader("Boid settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-                ImGui::SliderInt("Boid Count", &boidsCount, 0, 800);
+                ImGui::SliderInt("Boid Count", &boidsCount, 0, 3000);
                 ImGui::SliderFloat("Boid Speed", &boidSpeed, 0.f, 100.f);
                 ImGui::SliderFloat("Boid Vision Range", &boidVisionRange, 0.f, 15.f);
                 ImGui::SliderFloat("Boid Vision Angle", &boidVisionAngle, 0.f, 180.f);
@@ -396,7 +397,7 @@ int main() {
                     boidSpeed = 40.f;
                     boidVisionRange = 12.f;
                     boidVisionAngle = 150.f;
-                    boidsCount = 500;
+                    boidsCount = 1000;
                     cohesionStrength = 1.f;
                     alignmentStrength = 1.f;
                     separationStrength = 3.f;
@@ -650,6 +651,9 @@ namespace {
             else if (GLFW_KEY_3 == key && GLFW_PRESS == action) {
 				camera->mode = FlY_THROUGH;
                 camera->position = { 0.f, 25.f, 150.f};
+                camera->yaw = -90.f;
+                camera->pitch = 0.f;
+                camera->front = { 0.f, 0.f, -1.f };
             }
             else if (GLFW_KEY_4 == key && GLFW_PRESS == action) {
                 if (boidsCount != 0) {
