@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <chrono>
 
-#include "CubeMap.hpp"
+#include "Cubemap.hpp"
 #include "Shader.hpp"
 #include "Model.hpp"
 #include "Boid.hpp"
@@ -34,7 +34,7 @@ namespace {
     constexpr unsigned int WINDOW_HEIGHT = 720;
 
     constexpr float CAMERA_MOVEMENT = 50.f;
-    constexpr float MOUSE_SENSITIVITY = 0.01f;
+    constexpr float MOUSE_SENSITIVITY = 0.005f;
 
     constexpr unsigned int LOCKED_ARC_BALL = 1;
     constexpr unsigned int TOP_DOWN = 2;
@@ -46,9 +46,6 @@ namespace {
     constexpr unsigned int NO_DIRECTION = 0;
     constexpr unsigned int DIRECTION_GIVEN = 1;
     constexpr unsigned int POINT_GIVEN = 2;
-
-    float tailAngle = 0.f;
-    float tailSpeed = 0.01f;
 
     // Global variables changeable in the GUI
     unsigned int boidControl = NO_DIRECTION;
@@ -64,7 +61,6 @@ namespace {
     float separationStrength = 3.f;
 
     unsigned int boidToFollow = 0;
-    Vec3f thirdPersonDirection = { 0.f, 0.f, 0.f };
 
     Light light = {
         { 0.f, 100.f, 0.f }, // position
@@ -92,7 +88,6 @@ namespace {
         float yaw = -90.f;
         float pitch = 0.f;
 
-        float lastXPos, lastYPos;
         Vec3f front = { 0.f, 0.f, -1.f };
         Vec3f up = { 0.f, 1.f, 0.f };
     };
@@ -103,8 +98,13 @@ namespace {
     void cursor_position_callback(GLFWwindow*, double, double);
     void mouse_button_callback(GLFWwindow*, int, int, int);
 
-    Vec3f targetLocation = { 0.f, 0.f, 0.f };
-    Vec3f targetDirection = { 0.f, 0.f, 0.f };
+    // Vectors for controlling the boids
+    Vec3f userInputLocation = { 0.f, 0.f, 0.f };
+    Vec3f userInputDirection = { 0.f, 0.f, 0.f };
+
+    // Fish animation
+    float tailAngle = 0.f;
+    float tailSpeed = 0.01f;
 }
 
 
@@ -171,26 +171,23 @@ int main() {
     auto last = std::chrono::steady_clock::now();
     
     // Set up shader for the skybox
-    Shader CubeMapShader("assets/shaders/CubeMap.vert", "assets/shaders/CubeMap.frag");
+    Shader CubemapShader("assets/shaders/Cubemap.vert", "assets/shaders/Cubemap.frag");
     const char* faces[6] = { "assets/textures/right.jpg",
                             "assets/textures/left.jpg",
                             "assets/textures/top.jpg",
                             "assets/textures/bottom.jpg",
                             "assets/textures/front.jpg",
                             "assets/textures/back.jpg" };
-    CubeMap cubemap(faces);
+    Cubemap cubemap(faces);
 
     // Set up shaders for model rendering
     Shader SimpleShader("assets/shaders/BlinnPhongSimple.vert", "assets/shaders/BlinnPhongSimple.frag");
     Shader MultiMaterialShader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MultiMaterialShader.data.shaderProgram };
 
-
-    Model water = load_wavefront_obj("assets/models/water.obj");
     // Define objects
     Material terrainMat = Material{ rgb_to_linear(Vec3f{ 172, 150, 83 }), rgb_to_linear(Vec3f{ 189, 171, 117 }), rgb_to_linear(Vec3f{ 205, 192, 152 })};
-    // Terrain scaled to a 1 unit size
-    Model terrain = generate_terrain("assets/textures/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f));
+    Model terrain = generate_terrain("assets/textures/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f)); // Scaled to a 1 unit size
     float maxHeight = 0.f;
     for (Vertex& v : terrain.vertices) {
         if (v.positions.y > maxHeight) maxHeight = v.positions.y;
@@ -241,8 +238,8 @@ int main() {
     Model cone = generate_cone(16, coneMaterial, make_scaling(3.f, 1.f, 1.f));
 
     std::vector<Boid*> boids;
-    srand((time(NULL)));
-    for (unsigned int i = 0; i < boidsCount; i++)
+    srand((unsigned int)(time(NULL)));
+    for (int i = 0; i < boidsCount; i++)
     {
 	    boids.push_back(new Boid(obstacles));
     }
@@ -383,21 +380,26 @@ int main() {
             ImGui::Begin("Simulation Parameters");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::Checkbox("Pause - PRESS [SPACE]", &paused);
+            ImGui::SameLine();
+            ImGui::Checkbox("Technical View [T]", &technicalView);
+            ImGui::Checkbox("Switch GUI on/off [G]", &showGUI);
             if (ImGui::CollapsingHeader("Boid settings", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::SliderInt("Boid Count", &boidsCount, 0, 3000);
                 ImGui::SliderFloat("Boid Speed", &boidSpeed, 0.f, 100.f);
                 ImGui::SliderFloat("Boid Vision Range", &boidVisionRange, 0.f, 15.f);
                 ImGui::SliderFloat("Boid Vision Angle", &boidVisionAngle, 0.f, 180.f);
+                if (ImGui::Button("Default parameters")) {
+                    boidSpeed = 40.f;
+                    boidVisionRange = 12.f;
+                    boidVisionAngle = 150.f;
+                    boidsCount = 1000;
+                }
                 ImGui::Separator();
                 ImGui::Text("Rules:");
                 ImGui::SliderFloat("Cohesion", &cohesionStrength, 0.f, 5.f);
                 ImGui::SliderFloat("Alignment", &alignmentStrength, 0.f, 5.f);
                 ImGui::SliderFloat("Separation", &separationStrength, 0.f, 5.f);
-                if (ImGui::Button("Default")) {
-                    boidSpeed = 40.f;
-                    boidVisionRange = 12.f;
-                    boidVisionAngle = 150.f;
-                    boidsCount = 1000;
+                if (ImGui::Button("Default rule strengths")) {
                     cohesionStrength = 1.f;
                     alignmentStrength = 1.f;
                     separationStrength = 3.f;
@@ -405,6 +407,18 @@ int main() {
                 ImGui::Separator();
             }
             if (ImGui::CollapsingHeader("Camera controls (Instructions)", false)) {
+                ImGui::Columns(2, "col0");
+                ImGui::SetColumnWidth(0, 250);
+                ImGui::Text("Increase camera speed");
+                ImGui::Text("Decrease camera speed");
+
+                ImGui::NextColumn();
+                ImGui::Text("PRESS [SHIFT]");
+                ImGui::Text("PRESS [CTRL]");
+                ImGui::Columns(1);
+                ImGui::Separator();
+
+
                 ImGui::Columns(2, "col1");
                 ImGui::SetColumnWidth(0, 250);
                 ImGui::Text("Camera 1: Locked height ArcBall");
@@ -461,10 +475,9 @@ int main() {
                 ImGui::Columns(1);
                 ImGui::Separator();
             }
-            ImGui::Checkbox("Technical View", &technicalView);
-            if(ImGui::Button("No direction")) { boidControl = NO_DIRECTION; targetDirection = { 0.f, 0.f, 0.f }; }
+            if(ImGui::Button("No direction")) { boidControl = NO_DIRECTION; userInputDirection = { 0.f, 0.f, 0.f }; }
             ImGui::SameLine();
-            if (ImGui::Button("Go in direction")) { boidControl = DIRECTION_GIVEN; targetDirection = { 1.f, 0.f, 0.f }; }
+            if (ImGui::Button("Go in direction")) { boidControl = DIRECTION_GIVEN; userInputDirection = { 0.f, 0.f, 0.f }; }
             ImGui::SameLine();
             if (ImGui::Button("Go to point")) {
                 boidControl = POINT_GIVEN;
@@ -478,17 +491,20 @@ int main() {
                 ImGui::Text("To move the target point, use these sliders or:");
                 ImGui::Text("Hold [LEFT CLICK] to move it on the Y axis.");
                 ImGui::Text("Hold [RIGHT CLICK] to move on the XZ plane.");
-                ImGui::SliderFloat("Point X", &targetLocation.x, -SIMULATION_SIZE.x, SIMULATION_SIZE.x);
-                ImGui::SliderFloat("Point Y", &targetLocation.y, 0.f, SIMULATION_SIZE.y);
-                ImGui::SliderFloat("Point Z", &targetLocation.z, -SIMULATION_SIZE.z, SIMULATION_SIZE.z);
+                ImGui::SliderFloat("Point X", &userInputLocation.x, -SIMULATION_SIZE.x, SIMULATION_SIZE.x);
+                ImGui::SliderFloat("Point Y", &userInputLocation.y, 0.f, SIMULATION_SIZE.y);
+                ImGui::SliderFloat("Point Z", &userInputLocation.z, -SIMULATION_SIZE.z, SIMULATION_SIZE.z);
                 if (ImGui::Button("Default target (Origin)")) {
-                    targetLocation = { 0.f, 0.f, 0.f };
+                    userInputLocation = { 0.f, 0.f, 0.f };
                 }
             }
             else if (boidControl == DIRECTION_GIVEN) {
-                ImGui::SliderFloat("Direction X", &targetDirection.x, -1.f, 1.f );
-                ImGui::SliderFloat("Direction Y", &targetDirection.y, -1.f, 1.f );
-                ImGui::SliderFloat("Direction Z", &targetDirection.z, -1.f, 1.f );
+                ImGui::SliderFloat("Direction X", &userInputDirection.x, -1.f, 1.f );
+                ImGui::SliderFloat("Direction Y", &userInputDirection.y, -1.f, 1.f );
+                ImGui::SliderFloat("Direction Z", &userInputDirection.z, -1.f, 1.f );
+                if (ImGui::Button("Default (No direction)")) {
+					userInputDirection = { 0.f, 0.f, 0.f };
+				}
             }
 
             ImGui::End();
@@ -521,11 +537,11 @@ int main() {
                 avoid = boid->avoidEdges(2.f) + boid->avoidObstacles(obstacles, 3.f);
 
                 if (boidControl == POINT_GIVEN) {
-                    targetDirection = normalize(targetLocation - boid->currentPosition);
+                    userInputDirection = normalize(userInputLocation - boid->currentPosition);
                 }
 
                 boid->setTargetDirection(normalize(boid->currentDirection +
-                    cohesion + alignment + separation + targetDirection) + avoid);
+                    cohesion + alignment + separation + userInputDirection) + avoid);
                 boid->updateDirection(movementSpeed, turnSharpness);
             }
             // Instanced rendering of boid_model for every boid created
@@ -537,9 +553,8 @@ int main() {
                 cone.render(camera.position, light, world2projection, boid->model2world, shadersInUse);
         }
 
-        // Render terrain with specified shader
-        if(technicalView)
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        // Render terrain (as wireframe if in technical view mode)
+        if(technicalView) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         terrain.render(camera.position, light, world2projection, terrain.model2world, shadersInUse);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -548,10 +563,7 @@ int main() {
 
         //Location point for directed movement
         if(boidControl == POINT_GIVEN)
-            sphere.render(camera.position, light, world2projection, make_translation(targetLocation), shadersInUse);
-
-        // Draw blended objects
-        //water.render(camera.position, world2projection, terrain.model2world, shadersInUse);
+            sphere.render(camera.position, light, world2projection, make_translation(userInputLocation), shadersInUse);
 
         // Render obstacle outlines
         if (technicalView) {
@@ -563,9 +575,8 @@ int main() {
 		    }
             glDisable(GL_BLEND);
         }
-
-        if (!technicalView)
-            cubemap.render(projection, world2camera, CubeMapShader.data.shaderProgram);
+        else // Render cubemap if not in technical view mode
+            cubemap.render(projection, world2camera, CubemapShader.data.shaderProgram);
 
         glBindVertexArray(0);
         glUseProgram(0);
@@ -574,11 +585,6 @@ int main() {
         
         if (showGUI) {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        }
-
-        GLenum gl_error = glGetError();
-        if (gl_error != GL_NO_ERROR) {
-            printf("OpenGL error: %d\n", gl_error);
         }
 
         glfwSwapBuffers(window);
@@ -715,7 +721,7 @@ namespace {
         }
     }
 
-    void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    void mouse_button_callback(GLFWwindow* window, int button, int action, int) {
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
             if (!camera->active && boidControl == POINT_GIVEN) {
                 if (GLFW_MOUSE_BUTTON_RIGHT == button) {
@@ -791,29 +797,29 @@ namespace {
             }
             else {
                 if(camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN)
-                    // If right click is pressed, change targetLocation on XZ plane
+                    // If right click is pressed, change userInputLocation on XZ plane
                     if (rightClick) {
                         int nwidth, nheight;
 					    glfwGetFramebufferSize(window, &nwidth, &nheight);
 					    float x = float(xPos) / float(nwidth);
 					    float y = float(yPos) / float(nheight);
-					    targetLocation.x = x * 2 * SIMULATION_SIZE.x - SIMULATION_SIZE.x;
-					    targetLocation.z = y * 2 * SIMULATION_SIZE.z - SIMULATION_SIZE.z;
+					    userInputLocation.x = x * 2 * SIMULATION_SIZE.x - SIMULATION_SIZE.x;
+					    userInputLocation.z = y * 2 * SIMULATION_SIZE.z - SIMULATION_SIZE.z;
 
-                        if (targetLocation.x > SIMULATION_SIZE.x) targetLocation.x = SIMULATION_SIZE.x;
-                        else if (targetLocation.x < -SIMULATION_SIZE.x) targetLocation.x = -SIMULATION_SIZE.x;
+                        if (userInputLocation.x > SIMULATION_SIZE.x) userInputLocation.x = SIMULATION_SIZE.x;
+                        else if (userInputLocation.x < -SIMULATION_SIZE.x) userInputLocation.x = -SIMULATION_SIZE.x;
                 
-                        if (targetLocation.z > SIMULATION_SIZE.z) targetLocation.z = SIMULATION_SIZE.z;
-                        else if (targetLocation.z < -SIMULATION_SIZE.z) targetLocation.z = -SIMULATION_SIZE.z;
+                        if (userInputLocation.z > SIMULATION_SIZE.z) userInputLocation.z = SIMULATION_SIZE.z;
+                        else if (userInputLocation.z < -SIMULATION_SIZE.z) userInputLocation.z = -SIMULATION_SIZE.z;
                     }
-                    // If left click is pressed, change targetLocation on Y axis
+                    // If left click is pressed, change userInputLocation on Y axis
                     else if (leftClick) {
                         int nwidth, nheight;
                         glfwGetFramebufferSize(window, &nwidth, &nheight);
                         float y = float(yPos) / float(nheight);
-                        targetLocation.y = y * -50.f + 50.f;
-                        if (targetLocation.y > 50.f) targetLocation.y = 50.f;
-                        else if (targetLocation.y < 0.f) targetLocation.y = 0.f;
+                        userInputLocation.y = y * -50.f + 50.f;
+                        if (userInputLocation.y > 50.f) userInputLocation.y = 50.f;
+                        else if (userInputLocation.y < 0.f) userInputLocation.y = 0.f;
                     }
             }
         }

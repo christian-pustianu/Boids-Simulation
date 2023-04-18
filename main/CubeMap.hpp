@@ -5,8 +5,54 @@
 #include "../math/mat33.hpp"
 #include "../third_party/stb/include/stb_image.h"
 
+constexpr float cubePositions[] = {
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
 
-class CubeMap {
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f
+};
+
+/**
+* @brief Representation of a cubemap used for skyboxes.
+*/
+class Cubemap {
 private:
 	unsigned int textureID = 0;
 	unsigned int VBO = 0, VAO = 0;
@@ -15,15 +61,18 @@ public:
 	* @brief Creates a cube map object by loading the texture data
 	* and setting up rendering data.
 	*
-	* @param shader - The shader to use for rendering the cube map.
+	* @param cubemap - An array of 6 strings containing the paths to the
+	* texture files for the cube map.
 	*/
-	CubeMap(const char* cubemap[6]);
-	~CubeMap() {};
+	Cubemap(const char* cubemap[6]);
+	~Cubemap() {};
 	
 	/**
 	* @brief Handles the rendering of a cube map object with the specified shader.
 	*
-	* @param shader - The shader to use for rendering the cube map.
+	* @param projection - The projection matrix.
+	* @param world2camera - The world to camera matrix.
+	* @param shaderProgram - The shader's program ID.
 	*
 	* @return void
 	*/

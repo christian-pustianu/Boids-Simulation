@@ -15,7 +15,7 @@ public:
 		this->model2world = make_translation(position);
 	};
 
-	virtual bool isColliding(Vec3f position) {
+	virtual bool isColliding(Vec3f) {
 		return false;
 	};
 };
@@ -30,8 +30,8 @@ public:
 	this->model2world = make_translation(position) * make_scaling(radius, radius, radius);
 	};
 
-	bool isColliding(Vec3f position) override {
-		return length(position - this->position) < this->radius + 2.f;
+	bool isColliding(Vec3f boidPosition) override {
+		return length(boidPosition - this->position) < this->radius + 2.f;
 	};
 };
 
@@ -49,9 +49,9 @@ public:
 		this->corner2 = this->position + this->size + Vec3f{ 5.f, 5.f, 5.f };
 	}
 
-	bool isColliding(Vec3f position) override {
-		return position.x >= this->corner1.x && position.x <= this->corner2.x &&
-			position.y >= this->corner1.y && position.y <= this->corner2.y &&
-			position.z >= this->corner1.z && position.z <= this->corner2.z;
+	bool isColliding(Vec3f boidPosition) override {
+		return boidPosition.x >= this->corner1.x && boidPosition.x <= this->corner2.x &&
+			boidPosition.y >= this->corner1.y && boidPosition.y <= this->corner2.y &&
+			boidPosition.z >= this->corner1.z && boidPosition.z <= this->corner2.z;
 	}
 };

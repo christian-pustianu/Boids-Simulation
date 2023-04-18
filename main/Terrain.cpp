@@ -9,8 +9,8 @@ Model generate_terrain(const char* heightmap, Material material, Mat44f transfor
 
     Mat33f const N = mat33(transpose(invert(transformMatrix)));
 
-    for (unsigned int i = 0; i < width-1; i++) {
-        for (unsigned int j = 0; j < height-1; j++) {
+    for (int i = 0; i < width-1; i++) {
+        for (int j = 0; j < height-1; j++) {
             //Triangle 1
             // retrieve texel for (i,j) tex coord
             unsigned char* texel = data + (i + width * j) * nChannels;

@@ -1,6 +1,6 @@
-#include "CubeMap.hpp"
+#include "Cubemap.hpp"
 
-CubeMap::CubeMap(const char* cubemap[6]) {
+Cubemap::Cubemap(const char* cubemap[6]) {
     unsigned int textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -31,50 +31,6 @@ CubeMap::CubeMap(const char* cubemap[6]) {
 
     this->textureID = textureID;
 
-    float cubePositions[] = {   
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f
-    };
-
     glGenBuffers(1, &this->VBO);
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubePositions), cubePositions, GL_STATIC_DRAW);
@@ -95,7 +51,7 @@ CubeMap::CubeMap(const char* cubemap[6]) {
     glDeleteBuffers(1, &this->VBO);
 }
 
-void CubeMap::render(Mat44f projection, Mat44f world2camera, unsigned int shaderProgram) {
+void Cubemap::render(Mat44f projection, Mat44f world2camera, unsigned int shaderProgram) {
     glUseProgram(shaderProgram);
     glDepthFunc(GL_LEQUAL);
     glUniformMatrix4fv(
