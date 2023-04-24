@@ -1,5 +1,7 @@
 // Code adapted from coursework and exercises of the 2022-2023 Semester 1
 // module "COMP3811 Computer Graphics" at the University of Leeds.
+// This only includes the struct and the operator definitions.
+// The Functions section is my own work.
 
 #pragma once
 
@@ -128,6 +130,7 @@ Vec4f& operator/=( Vec4f& leftSide, float rightSide ) noexcept
 
 
 // Functions:
+// Dot product of two vectors
 constexpr
 float dot( Vec4f leftSide, Vec4f rightSide ) noexcept
 {
@@ -137,6 +140,7 @@ float dot( Vec4f leftSide, Vec4f rightSide ) noexcept
 		+ leftSide.w * rightSide.w;
 }
 
+// Cross product of two vectors
 inline
 float length( Vec4f vector ) noexcept
 {

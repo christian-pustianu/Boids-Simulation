@@ -4,11 +4,11 @@
 
 #include "../include/stb_image.h"
 
-Model load_wavefront_obj(char const* aPath) {
+Model load_wavefront_obj(char const* objPath) {
 	// Ask rapidobj to load the requested file
-	auto result = rapidobj::ParseFile(aPath);
+	auto result = rapidobj::ParseFile(objPath);
 	if (result.error)
-		throw std::printf("Unable to load OBJ file '%s': %s", aPath, result.error.code.message().c_str());
+		throw std::printf("Unable to load OBJ file '%s': %s", objPath, result.error.code.message().c_str());
 
 	rapidobj::Triangulate(result);
 

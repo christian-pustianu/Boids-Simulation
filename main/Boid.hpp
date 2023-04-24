@@ -45,7 +45,7 @@ private:
 	*
 	* @return void
 	*/
-	void randomizePosition(std::vector<Obstacle*> obstacles) {
+	void randomizePosition(std::vector<Obstacle*> &obstacles) {
 		// spawn boid at random position within simulation space (x, y, z) = (-100, 2, -100) to (100, 50, 100)
 		bool collision = false;
 		do {
@@ -79,10 +79,10 @@ public:
 	/**
 	* @brief Constructor - creates a Boid object at a random position facing a random direction.
 	*
-	* @param obstacles - A vector of pointers to the obstacles that is used in randomizePosition(obstacles).
+	* @param obstacles - A reference to a vector of pointers to obstacles, that is used in randomizePosition(obstacles).
 	* 
 	*/
-	Boid(std::vector<Obstacle*> obstacles) {
+	Boid(std::vector<Obstacle*> &obstacles) {
 		// Spawn boid at random position and direction
 		randomizePosition(obstacles);
 		randomizeDirection();

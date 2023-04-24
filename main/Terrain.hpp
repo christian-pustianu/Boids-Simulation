@@ -12,6 +12,6 @@
 * @param material - The material of the terrain.
 * @param transformMatrix - The matrix used to transform the terrain.
 *
-* @return The terrain's mesh object.
+* @return The terrain's model object.
 */
 Model generate_terrain(const char* heightmap, Material material, Mat44f transformMatrix = Identity44f);

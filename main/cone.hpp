@@ -9,6 +9,6 @@
 * @param color The color of the cone (will be assigned to the material's ambient element).
 * @param transformMatrix The matrix used to transform the cone.
 * 
-* @return The cone's mesh object.
+* @return The cone's model object.
 */
 Model generate_cone(std::size_t subdivs = 16, Material material = {}, Mat44f transformMatrix = Identity44f);

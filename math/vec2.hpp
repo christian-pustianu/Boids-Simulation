@@ -1,5 +1,7 @@
 // Code adapted from coursework and exercises of the 2022-2023 Semester 1
 // module "COMP3811 Computer Graphics" at the University of Leeds.
+// This only includes the struct and the operator definitions.
+// The Functions section is my own work.
 
 #pragma once
 
@@ -95,18 +97,17 @@ Vec2f& operator/=( Vec2f& leftSide, float rightSide ) noexcept
 
 
 // Functions:
+// Returns the dot product of two vectors
 constexpr
 float dot( Vec2f leftSide, Vec2f rightSide ) noexcept
 {
 	return leftSide.x * rightSide.x + leftSide.y * rightSide.y;
 }
 
+// Returns the length of a vector
 inline
 float length( Vec2f vector ) noexcept
 {
-	// The standard function std::sqrt() is not marked as constexpr. length()
-	// calls std::sqrt() unconditionally, so length() cannot be marked
-	// constexpr itself.
 	return std::sqrt( dot( vector, vector ) );
 }
 

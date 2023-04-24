@@ -1,6 +1,7 @@
 // Some code adapted from coursework and exercises of the 2022-2023 Semester 1
 // module "COMP3811 Computer Graphics" at the University of Leeds.
 // This only includes the struct definition and the operator definitions.
+// The Functions section is my own work.
 
 #pragma once
 
@@ -112,6 +113,7 @@ Vec3f& operator/=( Vec3f& leftSide, float scalar ) noexcept {
 
 
 // Functions:
+// Dot product of two vectors
 constexpr
 float dot( Vec3f leftSide, Vec3f rightSide ) noexcept {
 	return leftSide.x * rightSide.x 
@@ -119,11 +121,13 @@ float dot( Vec3f leftSide, Vec3f rightSide ) noexcept {
 		+ leftSide.z * rightSide.z;
 }
 
+// Length of a vector
 inline
 float length( Vec3f vector ) noexcept {
 	return std::sqrt( dot( vector, vector ) );
 }
 
+// Cross product of two vectors, return a vector perpendicular to both
 inline
 Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept {
 	return Vec3f {
@@ -133,6 +137,7 @@ Vec3f cross(Vec3f leftSide, Vec3f rightSide) noexcept {
 	};
 }
 
+// Normalize a vector, return the same vector if it's a null vector
 inline
 Vec3f normalize( Vec3f vector ) noexcept {
 	if( vector.x == 0 && vector.y == 0 && vector.z == 0)
@@ -142,6 +147,7 @@ Vec3f normalize( Vec3f vector ) noexcept {
 	return vector / l;
 }
 
+// Clamp a vector between two values
 inline
 Vec3f clamp_vec(Vec3f vector, float min, float max) noexcept {
 	return Vec3f {
@@ -161,12 +167,12 @@ Vec3f lerp(Vec3f vector1, Vec3f vector2, float weight) noexcept {
 inline
 Vec3f slerp(Vec3f vector1, Vec3f vector2, float weight) noexcept {
 	float V1dotV2 = clamp(dot(vector1, vector2), -1.f, 1.f);
-	//V1dotV2 = clamp(V1dotV2, -1, 1);
 	float theta = std::acos(V1dotV2) * weight;
 	Vec3f RelativeVec = normalize(vector2 - vector1 * V1dotV2);
 	return (vector1 * std::cos(theta)) + (RelativeVec * std::sin(theta));
 }
 
+// Convert RGB color to linear space
 inline
 Vec3f rgb_to_linear(Vec3f color) noexcept {
 	return Vec3f {

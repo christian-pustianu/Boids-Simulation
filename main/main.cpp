@@ -62,20 +62,10 @@ namespace {
 
     unsigned int boidToFollow = 0;
 
-    Light light = {
-        { 0.f, 100.f, 0.f }, // position
-        { 0.1f, 0.1f, 0.1f }, // ambient
-        { 0.50980f, 0.88235f, 0.89020f }, // color (sunlight sRGB 0-1.0)
-        10000.f // strength
-    };
-
+    // Options for the simulation
+    bool paused = true;
     bool showGUI = true;
     bool technicalView = false;
-    bool rightClick = false;
-    bool leftClick = false;
-
-    // Pause switch for the simulation
-    bool paused = true;
 
     struct CameraState {
         bool active;
@@ -92,6 +82,13 @@ namespace {
         Vec3f up = { 0.f, 1.f, 0.f };
     };
 
+    Light light = {
+        { 0.f, 100.f, 0.f }, // position
+        { 0.1f, 0.1f, 0.1f }, // ambient
+        { 0.50980f, 0.88235f, 0.89020f }, // color (sunlight sRGB 0-1.0)
+        10000.f // strength
+    };
+
     // Callaback definitions for glfw
     void error_callback(int, const char*);
     void key_callback(GLFWwindow*, int, int, int, int);
@@ -101,6 +98,10 @@ namespace {
     // Vectors for controlling the boids
     Vec3f userInputLocation = { 0.f, 0.f, 0.f };
     Vec3f userInputDirection = { 0.f, 0.f, 0.f };
+
+    // Mouse input
+    bool rightClick = false;
+    bool leftClick = false;
 
     // Fish animation
     float tailAngle = 0.f;
@@ -185,9 +186,11 @@ int main() {
     Shader MultiMaterialShader("assets/shaders/BlinnPhongMultiMat.vert", "assets/shaders/BlinnPhongMultiMat.frag");
     GLuint shadersInUse[] = { SimpleShader.data.shaderProgram, MultiMaterialShader.data.shaderProgram };
 
-    // Define objects
+    // ----------------------------- Define objects ----------------------------- //
+
+    // Terrain with material
     Material terrainMat = Material{ rgb_to_linear(Vec3f{ 172, 150, 83 }), rgb_to_linear(Vec3f{ 189, 171, 117 }), rgb_to_linear(Vec3f{ 205, 192, 152 })};
-    Model terrain = generate_terrain("assets/textures/heightmap.png", terrainMat, make_scaling(0.0078f, 0.0005f, 0.0078f)); // Scaled to a 1 unit size
+    Model terrain = generate_terrain("assets/textures/heightmap.png", terrainMat, make_scaling({ 0.0078f, 0.0005f, 0.0078f })); // Scaled to a 1 unit size
     float maxHeight = 0.f;
     for (Vertex& v : terrain.vertices) {
         if (v.positions.y > maxHeight) maxHeight = v.positions.y;
@@ -195,12 +198,13 @@ int main() {
     maxHeight = maxHeight * SIMULATION_SIZE.y;
 
 
-    // Obstacles
+    // Obstacles meshes loaded from obj files
     Model box = Model(load_wavefront_obj("assets/models/box.obj"));
     Model sphere = Model(load_wavefront_obj("assets/models/sphere.obj"));
     Model columns = Model(load_wavefront_obj("assets/models/AllColumns.obj"));
     Model rocks = Model(load_wavefront_obj("assets/models/AllRocks.obj"));
 
+    // Abstract obstacle vector
     std::vector<Obstacle*> obstacles;
 
     // Columns on left side
@@ -232,11 +236,13 @@ int main() {
     obstacles.push_back(new BoxObstacle(&box, Vec3f{ -60.9f, -2.3f, 10.f }, Vec3f{ 9.3f, 3.7f, 7.f }));
 
 
-
+    // Fish mesh loaded from obj files
     Model fish = load_wavefront_obj("assets/models/fish.obj");
-    Material coneMaterial = {};
-    Model cone = generate_cone(16, coneMaterial, make_scaling(3.f, 1.f, 1.f));
+    
+    // Cone mesh to represent the boids in technical view
+    Model cone = generate_cone(16, {}, make_scaling({ 3.f, 1.f, 1.f }));
 
+    // Initialize a number of boidsCount boids
     std::vector<Boid*> boids;
     srand((unsigned int)(time(NULL)));
     for (int i = 0; i < boidsCount; i++)
@@ -267,10 +273,14 @@ int main() {
             boids.push_back(new Boid(obstacles));
         }
 
+        // If the number of boids is decreased, delete the last boids
         while (boidsCount < boids.size()) {
             boids.pop_back();
         }
 
+        // If the user is using the third person camera and the number of boids is decreased, 
+        // deleting the currently viewed boid defaults to the first boid or to the locked arc 
+        // ball camera if there is no boid left
         if (boids.size() == 0 && camera.mode == THIRD_PERSON) {
             camera.mode = LOCKED_ARC_BALL;
             camera.position.z = 150.f;
@@ -295,9 +305,9 @@ int main() {
         float dt = std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1>>>(now - last).count();
         last = now;
 
-        // CAMERA MOVEMENT
+        // Camera movement
         float measurmentUnit = CAMERA_MOVEMENT * dt * camera.move.speed;
-        // Update camera state
+        // Update camera state based on user input
         if (camera.mode == LOCKED_ARC_BALL || camera.mode == TOP_DOWN || camera.mode == THIRD_PERSON) {
             if (camera.move.forward)
                 camera.position.z -= measurmentUnit;
@@ -326,6 +336,7 @@ int main() {
         Mat44f world2camera = Identity44f;
         if (camera.mode == LOCKED_ARC_BALL) {
             Mat44f Rx = make_rotation_x(radians(30.f));
+            // Defaults to the initial rotation if the user is trying to guide the boids
             if (boidControl == POINT_GIVEN && !camera.active)
                 camera.rotation.x = 0.f;
             Mat44f Ry = make_rotation_y(camera.rotation.x);
@@ -338,6 +349,7 @@ int main() {
         else if (camera.mode == TOP_DOWN)
         {
             Mat44f Rx = make_rotation_x(radians(90.f));
+            // Defaults to the initial rotation if the user is trying to guide the boids
             if (boidControl == POINT_GIVEN && !camera.active)
                 camera.rotation.x = 0.f;
             Mat44f Ry = make_rotation_y(camera.rotation.x);
@@ -512,24 +524,22 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Terrain position in world
-        terrain.model2world = make_translation({ 0.f, -maxHeight, 0.f }) * make_scaling(SIMULATION_SIZE.x, SIMULATION_SIZE.y, SIMULATION_SIZE.z);
+        // set terrain transforms
+        terrain.model2world = make_translation({ 0.f, -maxHeight, 0.f }) * make_scaling(SIMULATION_SIZE);
 
         // Simulation parameters
         float movementSpeed = dt * boidSpeed;
         float turnSharpness = movementSpeed * 0.2f;
 
+        // If the simulation is running, animate the boids
         if (!technicalView && !paused) {
             tailAngle += tailSpeed;
             if (tailAngle >= 0.2f || tailAngle <= -0.2f) tailSpeed = -tailSpeed;
         }
-            //for private(cohesion, alignment, separation, avoid)
-        //#pragma omp parallel for private(cohesion, alignment, separation, avoid)
+
+        // Apply boids algorithm
         for (auto boid : boids) {
             if (!paused) {
-                //int threadNum = omp_get_thread_num();
-                //int maxThreads = omp_get_max_threads();
-                //printf(" Hello from thread %i of %i!\n", threadNum, maxThreads);
                 std::vector<Boid*> neighbours = boid->findNeighbours(boids, boidVisionRange, boidVisionAngle);
                 cohesion = boid->applyCohesion(neighbours, cohesionStrength);
                 alignment = boid->applyAlignment(neighbours, alignmentStrength);
@@ -544,7 +554,7 @@ int main() {
                     cohesion + alignment + separation + userInputDirection) + avoid);
                 boid->updateDirection(movementSpeed, turnSharpness);
             }
-            // Instanced rendering of boid_model for every boid created
+            // Render boids with the animated fish model or the cone (technical view)
             if (!technicalView) {
                 Mat44f animation = make_shear_x(0.f, tailAngle);
                 fish.render(camera.position, light, world2projection, boid->model2world*animation, shadersInUse);
@@ -554,18 +564,20 @@ int main() {
         }
 
         // Render terrain (as wireframe if in technical view mode)
-        if(technicalView) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if(technicalView)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         terrain.render(camera.position, light, world2projection, terrain.model2world, shadersInUse);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+        // Render obstacles: columns and rocks
         columns.render(camera.position, light, world2projection, columns.model2world, shadersInUse);
         rocks.render(camera.position, light, world2projection, rocks.model2world, shadersInUse);
 
-        //Location point for directed movement
+        // Render red sphere at the target point given by the user
         if(boidControl == POINT_GIVEN)
             sphere.render(camera.position, light, world2projection, make_translation(userInputLocation), shadersInUse);
 
-        // Render obstacle outlines
+        // Render obstacle hitboxes (bounding volumes) if in technical view mode
         if (technicalView) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -583,6 +595,7 @@ int main() {
 
         ImGui::Render();
         
+        // Render GUI if enabled
         if (showGUI) {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
@@ -616,6 +629,7 @@ namespace {
         std::fprintf(stderr, "GLFW error: %s (%d)\n", description, code);
     }
 
+    // Callback function for keyboard input
     void key_callback(GLFWwindow* window, int key, int, int action, int mods) {
         if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action) {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -721,6 +735,7 @@ namespace {
         }
     }
 
+    // Callback function for mouse buttons input
     void mouse_button_callback(GLFWwindow* window, int button, int action, int) {
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {
             if (!camera->active && boidControl == POINT_GIVEN) {
@@ -740,6 +755,7 @@ namespace {
 		}
 	}
 
+    // Callback function for mouse movement
     void cursor_position_callback(GLFWwindow* window, double xPos, double yPos)
     {
         if (auto* camera = static_cast<CameraState*>(glfwGetWindowUserPointer(window))) {

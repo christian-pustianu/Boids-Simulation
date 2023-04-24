@@ -1,5 +1,7 @@
 // Code adapted from coursework and exercises of the 2022-2023 Semester 1
 // module "COMP3811 Computer Graphics" at the University of Leeds.
+// This only includes the struct and the operator definitions.
+// The Functions section is my own work.
 
 #pragma once
 
@@ -52,6 +54,7 @@ Vec3f operator*( Mat33f const& leftSide, Vec3f const& rightSide ) noexcept
 }
 
 // Functions:
+// Tranform a 4x4 matrix into a 3x3 matrix by removing the last row and column
 inline
 Mat33f mat33( Mat44f const& Matrix )
 {
@@ -64,6 +67,7 @@ Mat33f mat33( Mat44f const& Matrix )
 	return result;
 }
 
+// Tranform a 3x3 matrix into a 4x4 matrix by adding a row and column of zeros
 inline
 Mat44f mat44(Mat33f const& Matrix)
 {

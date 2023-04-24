@@ -69,7 +69,7 @@ void Model::setupRendering()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, Mat44f model2world, GLuint shaderProgs[])
+void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, Mat44f givenModel2world, GLuint shaderProgs[])
 {
     GLuint shaderProg;
     if (materials.size() == 1)
@@ -97,7 +97,7 @@ void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, M
 
     glUniformMatrix4fv(
         1,
-        1, GL_TRUE, model2world.v
+        1, GL_TRUE, givenModel2world.v
     );
 
     glUniform3f(2, cameraPosition.x, cameraPosition.y, cameraPosition.z);

@@ -1,5 +1,7 @@
 // Code adapted from coursework and exercises of the 2022-2023 Semester 1
 // module "COMP3811 Computer Graphics" at the University of Leeds.
+// This only includes the struct and the operator definitions.
+// The Functions section is my own work.
 
 #pragma once
 
@@ -90,9 +92,10 @@ Mat44f operator*=(Mat44f& leftSide, Mat44f const& rightSide) noexcept
 	return leftSide;
 }
 
-// Functions:
 Mat44f invert(Mat44f const& Matrix) noexcept;
 
+// Functions:
+// Transposes a matrix
 inline
 Mat44f transpose(Mat44f const& Matrix) noexcept
 {
@@ -105,6 +108,8 @@ Mat44f transpose(Mat44f const& Matrix) noexcept
 	return result;
 }
 
+// Creates a lookAt matrix for a camera at a given position,
+// looking at a given point, with a given up vector
 inline
 Mat44f look_at(Vec3f eye, Vec3f front, Vec3f up) noexcept
 {
@@ -122,6 +127,7 @@ Mat44f look_at(Vec3f eye, Vec3f front, Vec3f up) noexcept
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a rotation matrix for a given angle around an arbitrary axis
 inline
 Mat44f make_rotation_custom_axis(Vec3f axis, float angle) noexcept
 {
@@ -138,88 +144,95 @@ Mat44f make_rotation_custom_axis(Vec3f axis, float angle) noexcept
 					0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a rotation matrix for a given angle around the X axis
 inline
-Mat44f make_rotation_x(float aAngle) noexcept
+Mat44f make_rotation_x(float angle) noexcept
 {
 	return Mat44f{ 1.f, 0.f, 0.f, 0.f,
-				   0.f, (float)cos(aAngle), (float)-sin(aAngle), 0.f,
-				   0.f, (float)sin(aAngle), (float)cos(aAngle), 0.f,
+				   0.f, (float)cos(angle), (float)-sin(angle), 0.f,
+				   0.f, (float)sin(angle), (float)cos(angle), 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
-
+// Creates a rotation matrix for a given angle around the Y axis
 inline
-Mat44f make_rotation_y(float aAngle) noexcept
+Mat44f make_rotation_y(float angle) noexcept
 {
-	return Mat44f{ (float)cos(aAngle), 0.f, (float)sin(aAngle), 0.f,
+	return Mat44f{ (float)cos(angle), 0.f, (float)sin(angle), 0.f,
 				   0.f, 1.f, 0.f, 0.f,
-				   (float)-sin(aAngle), 0.f, (float)cos(aAngle), 0.f,
+				   (float)-sin(angle), 0.f, (float)cos(angle), 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a rotation matrix for a given angle around the Z axis
 inline
-Mat44f make_rotation_z(float aAngle) noexcept
+Mat44f make_rotation_z(float angle) noexcept
 {
-	return Mat44f{ (float)cos(aAngle), (float)-sin(aAngle), 0.f, 0.f,
-				   (float)sin(aAngle), (float)cos(aAngle), 0.f, 0.f,
+	return Mat44f{ (float)cos(angle), (float)-sin(angle), 0.f, 0.f,
+				   (float)sin(angle), (float)cos(angle), 0.f, 0.f,
 				   0.f, 0.f, 1.f, 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a shear matrix on the X axis
 inline
-Mat44f make_shear_x(float aShY, float aShZ) noexcept
+Mat44f make_shear_x(float shearY, float shearZ) noexcept
 {
 	return Mat44f{ 1.f, 0.f, 0.f, 0.f,
-				   aShY, 1.f, 0.f, 0.f,
-				   aShZ, 0.f, 1.f, 0.f,
+				   shearY, 1.f, 0.f, 0.f,
+				   shearZ, 0.f, 1.f, 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a shear matrix on the Y axis
 inline
-Mat44f make_shear_y(float aShX, float aShZ) noexcept
+Mat44f make_shear_y(float shearX, float shearZ) noexcept
 {
-	return Mat44f{ 1.f, aShX, 0.f, 0.f,
+	return Mat44f{ 1.f, shearX, 0.f, 0.f,
 				   0.f, 1.f, 0.f, 0.f,
-				   0.f, aShZ, 1.f, 0.f,
+				   0.f, shearZ, 1.f, 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a shear matrix on the Z axis
 inline
-Mat44f make_shear_z(float aShX, float aShY) noexcept
+Mat44f make_shear_z(float shearX, float shearY) noexcept
 {
-	return Mat44f{ 1.f, 0.f, aShX, 0.f,
-				   0.f, 1.f, aShY, 0.f,
+	return Mat44f{ 1.f, 0.f, shearX, 0.f,
+				   0.f, 1.f, shearY, 0.f,
 				   0.f, 0.f, 1.f, 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a translation matrix for a given translation vector
 inline
-Mat44f make_translation(Vec3f aTranslation) noexcept
+Mat44f make_translation(Vec3f translation) noexcept
 {
-	return Mat44f{ 1.f, 0.f, 0.f, aTranslation.x,
-				   0.f, 1.f, 0.f, aTranslation.y,
-				   0.f, 0.f, 1.f, aTranslation.z,
+	return Mat44f{ 1.f, 0.f, 0.f, translation.x,
+				   0.f, 1.f, 0.f, translation.y,
+				   0.f, 0.f, 1.f, translation.z,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
+// Creates a scaling matrix for a given scaling vector
 inline
-Mat44f make_scaling(float aSX, float aSY, float aSZ) noexcept
+Mat44f make_scaling(Vec3f scale) noexcept
 {
-	return Mat44f{ aSX, 0.f, 0.f, 0.f,
-				   0.f, aSY, 0.f, 0.f,
-				   0.f, 0.f, aSZ, 0.f,
+	return Mat44f{ scale.x, 0.f, 0.f, 0.f,
+				   0.f, scale.y, 0.f, 0.f,
+				   0.f, 0.f, scale.z, 0.f,
 				   0.f, 0.f, 0.f, 1.f };
 }
 
-
+// Creates a perspective projection matrix
 inline
-Mat44f make_perspective_projection(float aFovInRadians, float aAspect, float aNear, float aFar) noexcept
+Mat44f make_perspective_projection(float fovInRadians, float aspectRatio, float nearPlane, float farPlane) noexcept
 {
-	float s = 1.f / (float)tan(aFovInRadians / 2.f);
-	float sx = s / aAspect;
+	float s = 1.f / (float)tan(fovInRadians / 2.f);
+	float sx = s / aspectRatio;
 	float sy = s;
-	float a = -(aFar + aNear) / (aFar - aNear);
-	float b = -2 * aFar * aNear / (aFar - aNear);
+	float a = -(farPlane + nearPlane) / (farPlane - nearPlane);
+	float b = -2 * farPlane * nearPlane / (farPlane - nearPlane);
 	return Mat44f{ sx, 0.f, 0.f, 0.f,
 				   0.f, sy, 0.f, 0.f,
 				   0.f, 0.f, a, b,
