@@ -59,9 +59,9 @@ Uses multithreading to load larger OBJ files.
 
 Note: only includes the actual header, README and LICENSE files.
 
-<!-- ## ImGui v1.60
+## ImGui v1.89.3
 
-- Where: https://github.com/ocornut/imgui/releases/tag/v1.60
+- Where: https://github.com/ocornut/imgui/releases/tag/v1.89.3
 - What: UI library
 - License: MIT
 
@@ -72,9 +72,14 @@ Included files:
 - imgui.h
 - imgui_demo.cpp
 - imgui_draw.cpp
-- imgui_impl_glfw_gl3.cpp
-- imgui_impl_glfw_gl3.h
+- imgui_impl_glfw.cpp
+- imgui_impl_glfw.h
+- imgui_impl_opengl3.cpp
+- imgui_impl_opengl3.h
+- imgui_impl_opengl3_loader.h
 - imgui_internal.h
-- stb_rect_pack.h
+- imgui_tables.cpp
+- imgui_widgets.cpp
+- stb_rectpack.h
 - stb_textedit.h
-- stb_truetype.h -->
+- stb_truetype.h
