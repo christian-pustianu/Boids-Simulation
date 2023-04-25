@@ -1,9 +1,9 @@
 #include <glad.h>
 #include <GLFW/glfw3.h>
 
-#include "../third_party/imGUI/imgui.h"
-#include "../third_party/imGUI/imgui_impl_glfw.h"
-#include "../third_party/imGUI/imgui_impl_opengl3.h"
+#include "../third_party/imgui/imgui.h"
+#include "../third_party/imgui/imgui_impl_glfw.h"
+#include "../third_party/imgui/imgui_impl_opengl3.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -23,10 +23,12 @@
 #include "../math/other.hpp"
 
 
+#ifdef __WIN32
 extern "C"  {
     // Force the use of the NVIDIA GPU on laptops with switchable graphics
     __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 }
+#endif
 
 namespace {
     // Global constant variables
@@ -112,7 +114,7 @@ namespace {
 int main() {
     // Initialize glfw
     if (!glfwInit()) {
-        throw std::exception("Failed to initialize GLFW");
+        printf("Failed to initialize GLFW");
     }
 
     // Set up glfw error handling
@@ -138,7 +140,7 @@ int main() {
 
     if (window == NULL) {
         glfwTerminate();
-        throw std::exception("Failed to create GLFW window");
+        printf("Failed to create GLFW window");
     }
 
     // Initialize camera
@@ -155,7 +157,7 @@ int main() {
 
     // Load GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        throw std::exception("Failed to load GLAD");
+        printf("Failed to load GLAD");
     }
     std::printf("RENDERER %s\n", glGetString(GL_RENDERER));
     std::printf("VENDOR %s\n", glGetString(GL_VENDOR));
@@ -172,7 +174,7 @@ int main() {
     auto last = std::chrono::steady_clock::now();
     
     // Set up shader for the skybox
-    Shader CubemapShader("assets/shaders/Cubemap.vert", "assets/shaders/Cubemap.frag");
+    Shader CubemapShader("assets/shaders/CubeMap.vert", "assets/shaders/CubeMap.frag");
     const char* faces[6] = { "assets/textures/right.jpg",
                             "assets/textures/left.jpg",
                             "assets/textures/top.jpg",
@@ -269,12 +271,12 @@ int main() {
         glfwPollEvents();
 
         // Update number of boids if changed by the GUI
-        while (boidsCount > boids.size()) {
+        while ((unsigned int)boidsCount > boids.size()) {
             boids.push_back(new Boid(obstacles));
         }
 
         // If the number of boids is decreased, delete the last boids
-        while (boidsCount < boids.size()) {
+        while ((unsigned int)boidsCount < boids.size()) {
             boids.pop_back();
         }
 
@@ -812,7 +814,7 @@ namespace {
                 }
             }
             else {
-                if(camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN)
+	        if(camera->mode == LOCKED_ARC_BALL || camera->mode == TOP_DOWN) {
                     // If right click is pressed, change userInputLocation on XZ plane
                     if (rightClick) {
                         int nwidth, nheight;
@@ -837,6 +839,7 @@ namespace {
                         if (userInputLocation.y > 50.f) userInputLocation.y = 50.f;
                         else if (userInputLocation.y < 0.f) userInputLocation.y = 0.f;
                     }
+	        }
             }
         }
     }

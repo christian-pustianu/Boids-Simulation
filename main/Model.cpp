@@ -86,7 +86,7 @@ void Model::render(Vec3f cameraPosition, Light light, Mat44f world2projection, M
 
 
     // material properties
-    for (int i = 0; i < materials.size(); i++) {
+    for (unsigned int i = 0; i < materials.size(); i++) {
         glUniform3f(3 + i * 6, materials.at(i).ambient.x, materials.at(i).ambient.y, materials.at(i).ambient.z);
         glUniform3f(4 + i * 6, materials.at(i).diffuse.x, materials.at(i).diffuse.y, materials.at(i).diffuse.z);
         glUniform3f(5 + i * 6, materials.at(i).specular.x, materials.at(i).specular.y, materials.at(i).specular.z);

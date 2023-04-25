@@ -3,7 +3,7 @@ workspace "Boids-Simulation"
 	cppdialect "C++17"
 
 	platforms { "x64" }
-	configurations { "debug", "release" } buildoptions { "/openmp" }
+	configurations { "debug", "release" }
 
 	flags "NoPCH"
 	flags "MultiProcessorCompile"

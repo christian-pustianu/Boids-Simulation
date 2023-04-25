@@ -76,7 +76,7 @@ public:
 		data = setupShaderProgram();
 		if (!data.success)
 		{
-			throw std::exception("Shader compilation failed.");
+			printf("Shader compilation failed.");
 		}
 	};
 

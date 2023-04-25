@@ -26,6 +26,8 @@ public:
 		this->model2world = make_translation(position);
 	};
 
+    virtual ~Obstacle() {};
+
 	/**
 	* @brief Abstract function for collision detection.
 	*
@@ -59,6 +61,8 @@ public:
 	this->radius = radius;
 	this->model2world = make_translation(position) * make_scaling({ radius, radius, radius });
 	};
+    
+	~SphereObstacle() {};
 
 	/**
 	* @brief Detects collision of sphere obstacle with another position.
@@ -96,6 +100,8 @@ public:
 		this->corner1 = this->position - this->size - Vec3f{ 5.f, 5.f, 5.f };
 		this->corner2 = this->position + this->size + Vec3f{ 5.f, 5.f, 5.f };
 	}
+
+    ~BoxObstacle() {};
 
 	/**
 	* @brief Detects collision of AABB obstacle with another position.

@@ -8,7 +8,7 @@ Model load_wavefront_obj(char const* objPath) {
 	// Ask rapidobj to load the requested file
 	auto result = rapidobj::ParseFile(objPath);
 	if (result.error)
-		throw std::printf("Unable to load OBJ file '%s': %s", objPath, result.error.code.message().c_str());
+		printf("Unable to load OBJ file '%s': %s", objPath, result.error.code.message().c_str());
 
 	rapidobj::Triangulate(result);
 

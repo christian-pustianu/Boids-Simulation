@@ -101,7 +101,7 @@ project( "x-imgui" )
 
 	location "."
 
-	files( "imGUI/**.h*" )
-	files( "imGUI/**.cpp*" )
+	files( "imgui/**.h*" )
+	files( "imgui/**.cpp*" )
 
 --EOF
