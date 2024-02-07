@@ -2,7 +2,7 @@
 
 Simulation of natural schooling behaviour in fish. Programmed in C++ with OpenGL, GLFW, and various other libraries (described in `third_party.md`). All `.obj` models were created by me in Blender.
 
-A demo of this simulation can be found [here](https://youtu.be/mlxYGclOZXI).
+A demo of this simulation can be found [here](https://youtu.be/mlxYGclOZXI) and the report of the dissertation [here](https://github.com/christian-pustianu/Boids-Simulation/blob/main/Dissertation%20Report.pdf).
 
 # User Manual
 
